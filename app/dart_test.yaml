@@ -1,0 +1,5 @@
+tags:
+  # Hits a live API on localhost:3000 instead of mocking it. Excluded from a
+  # plain `flutter test` run in CI:  flutter test --exclude-tags integration
+  integration:
+    description: Requires the API and database to be running.

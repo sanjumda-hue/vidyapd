@@ -1,0 +1,1260 @@
+generator client {
+  provider        = "prisma-client-js"
+  previewFeatures = ["postgresqlExtensions", "views"]
+}
+
+datasource db {
+  provider   = "postgresql"
+  url        = env("DATABASE_URL")
+  extensions = [btree_gin, citext, pg_trgm, pgcrypto]
+}
+
+/// This model contains an expression index which requires additional setup for migrations. Visit https://pris.ly/d/expression-indexes for more info.
+model branch_aliases {
+  id                       Int                      @id @default(autoincrement())
+  branch_id                Int                      @db.SmallInt
+  specialization_id        Int?
+  alias                    String
+  normalized_alias         String
+  counselling_authority_id Int?                     @db.SmallInt
+  created_at               DateTime                 @default(now()) @db.Timestamptz(6)
+  branches                 branches                 @relation(fields: [branch_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
+  counselling_authorities  counselling_authorities? @relation(fields: [counselling_authority_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
+  specializations          specializations?         @relation(fields: [specialization_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
+
+  @@index([normalized_alias(ops: raw("gin_trgm_ops"))], map: "idx_branch_aliases_trgm", type: Gin)
+}
+
+/// This table contains check constraints and requires additional setup for migrations. Visit https://pris.ly/d/check-constraints for more info.
+model branches {
+  id                 Int                  @id @default(autoincrement()) @db.SmallInt
+  code               String               @unique
+  name               String
+  stream             String               @default("core")
+  description        String?
+  icon               String?
+  is_popular         Boolean              @default(false)
+  display_order      Int                  @default(100) @db.SmallInt
+  is_active          Boolean              @default(true)
+  created_at         DateTime             @default(now()) @db.Timestamptz(6)
+  updated_at         DateTime             @default(now()) @db.Timestamptz(6)
+  branch_aliases     branch_aliases[]
+  college_branches   college_branches[]
+  prediction_results prediction_results[]
+  specializations    specializations[]
+
+  @@index([name(ops: raw("gin_trgm_ops"))], map: "idx_branches_name_trgm", type: Gin)
+}
+
+model categories {
+  id                      Int                       @id @default(autoincrement()) @db.SmallInt
+  code                    String                    @unique
+  name                    String
+  is_open_pool            Boolean                   @default(false)
+  display_order           Int                       @default(100) @db.SmallInt
+  created_at              DateTime                  @default(now()) @db.Timestamptz(6)
+  updated_at              DateTime                  @default(now()) @db.Timestamptz(6)
+  college_fees            college_fees[]
+  cutoff_data             cutoff_data[]
+  exam_rank_data          exam_rank_data[]
+  percentile_rank_mapping percentile_rank_mapping[]
+  prediction_requests     prediction_requests[]
+  seat_types              seat_types[]
+  user_profiles           user_profiles[]
+}
+
+model cities {
+  id               Int                @id @default(autoincrement())
+  state_id         Int                @db.SmallInt
+  name             String
+  created_at       DateTime           @default(now()) @db.Timestamptz(6)
+  updated_at       DateTime           @default(now()) @db.Timestamptz(6)
+  states           states             @relation(fields: [state_id], references: [id], onUpdate: NoAction)
+  college_campuses college_campuses[]
+  colleges         colleges[]
+
+  @@unique([state_id, name])
+  @@index([name(ops: raw("gin_trgm_ops"))], map: "idx_cities_name_trgm", type: Gin)
+}
+
+/// This table contains check constraints and requires additional setup for migrations. Visit https://pris.ly/d/check-constraints for more info.
+/// This model contains an expression index which requires additional setup for migrations. Visit https://pris.ly/d/expression-indexes for more info.
+model college_accreditations {
+  id            BigInt             @id @default(autoincrement())
+  college_id    Int
+  kind          accreditation_kind
+  category      String?
+  academic_year Int                @db.SmallInt
+  rank_value    Int?               @db.SmallInt
+  grade         String?
+  score         Decimal?           @db.Decimal(6, 2)
+  valid_from    DateTime?          @db.Date
+  valid_to      DateTime?          @db.Date
+  source_id     Int?
+  created_at    DateTime           @default(now()) @db.Timestamptz(6)
+  updated_at    DateTime           @default(now()) @db.Timestamptz(6)
+  colleges      colleges           @relation(fields: [college_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
+  data_sources  data_sources?      @relation(fields: [source_id], references: [id], onUpdate: NoAction, map: "fk_college_accreditations_source")
+}
+
+/// This table contains check constraints and requires additional setup for migrations. Visit https://pris.ly/d/check-constraints for more info.
+/// This model contains an expression index which requires additional setup for migrations. Visit https://pris.ly/d/expression-indexes for more info.
+model college_branches {
+  id                 BigInt               @id @default(autoincrement())
+  college_id         Int
+  branch_id          Int                  @db.SmallInt
+  specialization_id  Int?
+  campus_id          Int?
+  program_name       String
+  degree             degree_type          @default(BTech)
+  duration_years     Decimal              @default(4.0) @db.Decimal(3, 1)
+  total_intake       Int?                 @db.SmallInt
+  is_active          Boolean              @default(true)
+  started_year       Int?                 @db.SmallInt
+  discontinued_year  Int?                 @db.SmallInt
+  created_at         DateTime             @default(now()) @db.Timestamptz(6)
+  updated_at         DateTime             @default(now()) @db.Timestamptz(6)
+  branches           branches             @relation(fields: [branch_id], references: [id], onUpdate: NoAction)
+  college_campuses   college_campuses?    @relation(fields: [campus_id], references: [id], onUpdate: NoAction)
+  colleges           colleges             @relation(fields: [college_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
+  specializations    specializations?     @relation(fields: [specialization_id], references: [id], onUpdate: NoAction)
+  college_fees       college_fees[]
+  cutoff_data        cutoff_data[]
+  placement_data     placement_data[]
+  prediction_results prediction_results[]
+  seat_matrix        seat_matrix[]
+  user_shortlists    user_shortlists[]
+
+  @@unique([id, college_id, branch_id], map: "uq_college_branch_identity")
+}
+
+model college_campuses {
+  id               Int                @id @default(autoincrement())
+  college_id       Int
+  name             String
+  state_id         Int                @db.SmallInt
+  city_id          Int?
+  address          String?
+  is_main          Boolean            @default(false)
+  created_at       DateTime           @default(now()) @db.Timestamptz(6)
+  updated_at       DateTime           @default(now()) @db.Timestamptz(6)
+  college_branches college_branches[]
+  cities           cities?            @relation(fields: [city_id], references: [id], onUpdate: NoAction)
+  colleges         colleges           @relation(fields: [college_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
+  states           states             @relation(fields: [state_id], references: [id], onUpdate: NoAction)
+  hostel_data      hostel_data[]
+
+  @@unique([college_id, name])
+}
+
+/// This table contains check constraints and requires additional setup for migrations. Visit https://pris.ly/d/check-constraints for more info.
+/// This model contains an expression index which requires additional setup for migrations. Visit https://pris.ly/d/expression-indexes for more info.
+model college_fees {
+  id                 BigInt            @id @default(autoincrement())
+  college_id         Int
+  college_branch_id  BigInt?
+  academic_year      Int               @db.SmallInt
+  quota_id           Int?              @db.SmallInt
+  category_id        Int?              @db.SmallInt
+  tuition_fee_annual Decimal?          @db.Decimal(12, 2)
+  hostel_fee_annual  Decimal?          @db.Decimal(12, 2)
+  mess_fee_annual    Decimal?          @db.Decimal(12, 2)
+  other_fee_annual   Decimal?          @db.Decimal(12, 2)
+  one_time_fee       Decimal?          @db.Decimal(12, 2)
+  caution_deposit    Decimal?          @db.Decimal(12, 2)
+  total_course_fee   Decimal?          @db.Decimal(12, 2)
+  currency           String            @default("INR") @db.Char(3)
+  source_id          Int?
+  created_at         DateTime          @default(now()) @db.Timestamptz(6)
+  updated_at         DateTime          @default(now()) @db.Timestamptz(6)
+  categories         categories?       @relation(fields: [category_id], references: [id], onUpdate: NoAction)
+  college_branches   college_branches? @relation(fields: [college_branch_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
+  colleges           colleges          @relation(fields: [college_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
+  quotas             quotas?           @relation(fields: [quota_id], references: [id], onUpdate: NoAction)
+  data_sources       data_sources?     @relation(fields: [source_id], references: [id], onUpdate: NoAction)
+
+  @@index([college_id, academic_year(sort: Desc)], map: "idx_college_fees_lookup")
+}
+
+model college_institute_codes {
+  id                        Int                     @id @default(autoincrement())
+  college_id                Int
+  counselling_authority_id  Int                     @db.SmallInt
+  institute_code            String
+  institute_name_as_printed String?
+  created_at                DateTime                @default(now()) @db.Timestamptz(6)
+  colleges                  colleges                @relation(fields: [college_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
+  counselling_authorities   counselling_authorities @relation(fields: [counselling_authority_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
+
+  @@unique([counselling_authority_id, institute_code])
+  @@index([college_id], map: "idx_college_institute_codes_college")
+}
+
+/// This table contains check constraints and requires additional setup for migrations. Visit https://pris.ly/d/check-constraints for more info.
+/// This model or at least one of its fields has comments in the database, and requires an additional setup for migrations: Read more: https://pris.ly/d/database-comments
+model colleges {
+  id                         Int                          @id @default(autoincrement())
+  slug                       String                       @unique
+  name                       String
+  short_name                 String?
+  aicte_code                 String?
+  aishe_code                 String?
+  college_type               college_type
+  ownership                  ownership_type
+  affiliated_university      String?
+  state_id                   Int                          @db.SmallInt
+  city_id                    Int?
+  address                    String?
+  pincode                    String?
+  latitude                   Decimal?                     @db.Decimal(9, 6)
+  longitude                  Decimal?                     @db.Decimal(9, 6)
+  website                    String?
+  email                      String?
+  phone                      String?
+  established_year           Int?                         @db.SmallInt
+  is_autonomous              Boolean                      @default(false)
+  has_hostel                 Boolean?
+  about                      String?
+  logo_url                   String?
+  banner_url                 String?
+  nirf_rank_latest           Int?                         @db.SmallInt
+  nirf_year_latest           Int?                         @db.SmallInt
+  is_active                  Boolean                      @default(true)
+  created_at                 DateTime                     @default(now()) @db.Timestamptz(6)
+  updated_at                 DateTime                     @default(now()) @db.Timestamptz(6)
+  college_accreditations     college_accreditations[]
+  college_branches           college_branches[]
+  college_campuses           college_campuses[]
+  college_fees               college_fees[]
+  college_institute_codes    college_institute_codes[]
+  cities                     cities?                      @relation(fields: [city_id], references: [id], onUpdate: NoAction)
+  states                     states                       @relation(fields: [state_id], references: [id], onUpdate: NoAction)
+  hostel_data                hostel_data[]
+  notification_subscriptions notification_subscriptions[]
+  placement_data             placement_data[]
+  prediction_results         prediction_results[]
+
+  @@index([name(ops: raw("gin_trgm_ops"))], map: "idx_colleges_name_trgm", type: Gin)
+}
+
+/// This table contains check constraints and requires additional setup for migrations. Visit https://pris.ly/d/check-constraints for more info.
+model counselling_authorities {
+  id                         Int                          @id @default(autoincrement()) @db.SmallInt
+  code                       String                       @unique
+  name                       String
+  scope                      counselling_scope
+  state_id                   Int?                         @db.SmallInt
+  official_website           String?
+  logo_url                   String?
+  description                String?
+  is_active                  Boolean                      @default(true)
+  created_at                 DateTime                     @default(now()) @db.Timestamptz(6)
+  updated_at                 DateTime                     @default(now()) @db.Timestamptz(6)
+  branch_aliases             branch_aliases[]
+  college_institute_codes    college_institute_codes[]
+  states                     states?                      @relation(fields: [state_id], references: [id], onUpdate: NoAction)
+  counselling_processes      counselling_processes[]
+  data_sources               data_sources[]
+  prediction_results         prediction_results[]
+  prediction_weight_profiles prediction_weight_profiles[]
+}
+
+/// This table contains check constraints and requires additional setup for migrations. Visit https://pris.ly/d/check-constraints for more info.
+model counselling_dimension_map {
+  id                     Int                   @id @default(autoincrement())
+  counselling_process_id Int
+  dimension              String
+  ref_id                 Int                   @db.SmallInt
+  source_label           String
+  display_label          String?
+  display_order          Int                   @default(100) @db.SmallInt
+  is_active              Boolean               @default(true)
+  created_at             DateTime              @default(now()) @db.Timestamptz(6)
+  updated_at             DateTime              @default(now()) @db.Timestamptz(6)
+  counselling_processes  counselling_processes @relation(fields: [counselling_process_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
+
+  @@unique([counselling_process_id, dimension, source_label])
+  @@index([counselling_process_id, dimension, ref_id], map: "idx_dimension_map_lookup")
+}
+
+model counselling_exams {
+  id                       Int                   @id @default(autoincrement())
+  counselling_process_id   Int
+  exam_id                  Int                   @db.SmallInt
+  applies_to_college_types college_type[]
+  is_primary               Boolean               @default(true)
+  notes                    String?
+  created_at               DateTime              @default(now()) @db.Timestamptz(6)
+  counselling_processes    counselling_processes @relation(fields: [counselling_process_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
+  exams                    exams                 @relation(fields: [exam_id], references: [id], onUpdate: NoAction)
+
+  @@unique([counselling_process_id, exam_id])
+  @@index([exam_id], map: "idx_counselling_exams_exam")
+}
+
+/// This table contains check constraints and requires additional setup for migrations. Visit https://pris.ly/d/check-constraints for more info.
+model counselling_processes {
+  id                        Int                         @id @default(autoincrement())
+  counselling_authority_id  Int                         @db.SmallInt
+  academic_year             Int                         @db.SmallInt
+  code                      String                      @unique
+  name                      String
+  rank_basis                String                      @default("category_rank")
+  total_rounds              Int?                        @db.SmallInt
+  registration_url          String?
+  cutoff_url                String?
+  seat_matrix_url           String?
+  is_published              Boolean                     @default(false)
+  created_at                DateTime                    @default(now()) @db.Timestamptz(6)
+  updated_at                DateTime                    @default(now()) @db.Timestamptz(6)
+  counselling_dimension_map counselling_dimension_map[]
+  counselling_exams         counselling_exams[]
+  counselling_authorities   counselling_authorities     @relation(fields: [counselling_authority_id], references: [id], onUpdate: NoAction)
+  counselling_rounds        counselling_rounds[]
+  cutoff_data               cutoff_data[]
+  data_import_jobs          data_import_jobs[]
+  data_sources              data_sources[]
+  seat_matrix               seat_matrix[]
+
+  @@unique([counselling_authority_id, academic_year])
+  @@index([academic_year(sort: Desc)], map: "idx_counselling_processes_year")
+}
+
+model counselling_rounds {
+  id                     Int                   @id @default(autoincrement())
+  counselling_process_id Int
+  round_no               Int                   @db.SmallInt
+  name                   String
+  kind                   round_kind            @default(regular)
+  allotment_date         DateTime?             @db.Date
+  reporting_start        DateTime?             @db.Date
+  reporting_end          DateTime?             @db.Date
+  is_final_regular_round Boolean               @default(false)
+  cutoff_published       Boolean               @default(false)
+  created_at             DateTime              @default(now()) @db.Timestamptz(6)
+  updated_at             DateTime              @default(now()) @db.Timestamptz(6)
+  counselling_processes  counselling_processes @relation(fields: [counselling_process_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
+  cutoff_data            cutoff_data[]
+  data_import_jobs       data_import_jobs[]
+  seat_matrix            seat_matrix[]
+
+  @@unique([counselling_process_id, round_no, kind])
+}
+
+/// This table is a partition table and requires additional setup for migrations. Visit https://pris.ly/d/partition-tables for more info.
+/// This table contains check constraints and requires additional setup for migrations. Visit https://pris.ly/d/check-constraints for more info.
+model cutoff_data {
+  id                     BigInt                @default(autoincrement())
+  academic_year          Int                   @db.SmallInt
+  counselling_process_id Int
+  counselling_round_id   Int
+  round_no               Int                   @db.SmallInt
+  exam_id                Int                   @db.SmallInt
+  college_branch_id      BigInt
+  college_id             Int
+  branch_id              Int                   @db.SmallInt
+  seat_type_id           Int                   @db.SmallInt
+  category_id            Int                   @db.SmallInt
+  quota_id               Int                   @db.SmallInt
+  gender_id              Int                   @db.SmallInt
+  opening_rank           BigInt?
+  closing_rank           BigInt?
+  opening_percentile     Decimal?              @db.Decimal(11, 8)
+  closing_percentile     Decimal?              @db.Decimal(11, 8)
+  opening_score          Decimal?              @db.Decimal(10, 4)
+  closing_score          Decimal?              @db.Decimal(10, 4)
+  rank_basis             String                @default("category_rank")
+  seats_offered          Int?                  @db.SmallInt
+  is_preparatory         Boolean               @default(false)
+  source_id              Int?
+  import_job_id          BigInt?
+  is_verified            Boolean               @default(false)
+  imported_at            DateTime              @default(now()) @db.Timestamptz(6)
+  updated_at             DateTime              @default(now()) @db.Timestamptz(6)
+  categories             categories            @relation(fields: [category_id], references: [id], onUpdate: NoAction)
+  counselling_processes  counselling_processes @relation(fields: [counselling_process_id], references: [id], onUpdate: NoAction)
+  counselling_rounds     counselling_rounds    @relation(fields: [counselling_round_id], references: [id], onUpdate: NoAction)
+  exams                  exams                 @relation(fields: [exam_id], references: [id], onUpdate: NoAction)
+  genders                genders               @relation(fields: [gender_id], references: [id], onUpdate: NoAction)
+  data_import_jobs       data_import_jobs?     @relation(fields: [import_job_id], references: [id], onUpdate: NoAction)
+  quotas                 quotas                @relation(fields: [quota_id], references: [id], onUpdate: NoAction)
+  seat_types             seat_types            @relation(fields: [seat_type_id], references: [id], onUpdate: NoAction)
+  data_sources           data_sources?         @relation(fields: [source_id], references: [id], onUpdate: NoAction)
+  college_branches       college_branches      @relation(fields: [college_branch_id, college_id, branch_id], references: [id, college_id, branch_id], onDelete: Cascade, onUpdate: NoAction, map: "fk_cutoff_program")
+
+  @@id([academic_year, id])
+  @@unique([academic_year, counselling_process_id, round_no, college_branch_id, seat_type_id, quota_id, gender_id], map: "uq_cutoff_natural")
+  @@index([college_id, branch_id, seat_type_id, quota_id, gender_id, academic_year(sort: Desc), round_no(sort: Desc)], map: "idx_cutoff_by_college")
+  @@index([college_branch_id, seat_type_id, quota_id, gender_id, academic_year(sort: Desc), round_no(sort: Desc)], map: "idx_cutoff_by_program")
+}
+
+/// This table contains check constraints and requires additional setup for migrations. Visit https://pris.ly/d/check-constraints for more info.
+model data_change_logs {
+  id               BigInt            @id @default(autoincrement())
+  table_name       String
+  row_id           BigInt
+  action           change_action
+  changed_fields   String[]
+  old_values       Json?
+  new_values       Json?
+  import_job_id    BigInt?
+  actor_user_id    BigInt?
+  actor_kind       String            @default("system")
+  created_at       DateTime          @default(now()) @db.Timestamptz(6)
+  data_import_jobs data_import_jobs? @relation(fields: [import_job_id], references: [id], onUpdate: NoAction)
+  users            users?            @relation(fields: [actor_user_id], references: [id], onUpdate: NoAction, map: "fk_change_logs_actor")
+
+  @@index([table_name, row_id, created_at(sort: Desc)], map: "idx_change_logs_row")
+  @@index([created_at(sort: Desc)], map: "idx_change_logs_time")
+}
+
+/// This table contains check constraints and requires additional setup for migrations. Visit https://pris.ly/d/check-constraints for more info.
+model data_import_jobs {
+  id                     BigInt                 @id @default(autoincrement())
+  source_id              Int
+  counselling_process_id Int?
+  counselling_round_id   Int?
+  academic_year          Int?                   @db.SmallInt
+  status                 import_status          @default(queued)
+  trigger_kind           String                 @default("scheduler")
+  artifact_url           String?
+  artifact_path          String?
+  content_hash           String?
+  rows_parsed            Int                    @default(0)
+  rows_valid             Int                    @default(0)
+  rows_invalid           Int                    @default(0)
+  rows_duplicate         Int                    @default(0)
+  rows_inserted          Int                    @default(0)
+  rows_updated           Int                    @default(0)
+  error_summary          String?
+  validation_report      Json?
+  started_at             DateTime?              @db.Timestamptz(6)
+  finished_at            DateTime?              @db.Timestamptz(6)
+  reviewed_by            BigInt?
+  reviewed_at            DateTime?              @db.Timestamptz(6)
+  review_note            String?
+  published_at           DateTime?              @db.Timestamptz(6)
+  created_at             DateTime               @default(now()) @db.Timestamptz(6)
+  updated_at             DateTime               @default(now()) @db.Timestamptz(6)
+  cutoff_data            cutoff_data[]
+  data_change_logs       data_change_logs[]
+  counselling_processes  counselling_processes? @relation(fields: [counselling_process_id], references: [id], onUpdate: NoAction)
+  counselling_rounds     counselling_rounds?    @relation(fields: [counselling_round_id], references: [id], onUpdate: NoAction)
+  data_sources           data_sources           @relation(fields: [source_id], references: [id], onUpdate: NoAction)
+  users                  users?                 @relation(fields: [reviewed_by], references: [id], onUpdate: NoAction, map: "fk_import_jobs_reviewer")
+  data_import_staging    data_import_staging[]
+  seat_matrix            seat_matrix[]
+
+  @@index([source_id, created_at(sort: Desc)], map: "idx_import_jobs_source")
+  @@index([status, created_at(sort: Desc)], map: "idx_import_jobs_status")
+}
+
+model data_import_staging {
+  id                BigInt             @id @default(autoincrement())
+  import_job_id     BigInt
+  row_no            Int
+  target_table      String
+  raw               Json
+  normalized        Json?
+  status            staging_row_status @default(pending)
+  validation_errors Json?
+  target_row_id     BigInt?
+  created_at        DateTime           @default(now()) @db.Timestamptz(6)
+  data_import_jobs  data_import_jobs   @relation(fields: [import_job_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
+
+  @@unique([import_job_id, row_no])
+  @@index([import_job_id, status], map: "idx_staging_job_status")
+}
+
+/// This table contains check constraints and requires additional setup for migrations. Visit https://pris.ly/d/check-constraints for more info.
+model data_sources {
+  id                       Int                       @id @default(autoincrement())
+  code                     String                    @unique
+  name                     String
+  url                      String
+  kind                     source_kind
+  tier                     source_tier
+  adapter_key              String
+  data_type                String
+  exam_id                  Int?                      @db.SmallInt
+  counselling_authority_id Int?                      @db.SmallInt
+  counselling_process_id   Int?
+  poll_cron                String                    @default("0 */6 * * *")
+  last_content_hash        String?
+  last_checked_at          DateTime?                 @db.Timestamptz(6)
+  last_success_at          DateTime?                 @db.Timestamptz(6)
+  last_error               String?
+  consecutive_failures     Int                       @default(0) @db.SmallInt
+  auto_publish_allowed     Boolean                   @default(false)
+  is_active                Boolean                   @default(true)
+  notes                    String?
+  created_at               DateTime                  @default(now()) @db.Timestamptz(6)
+  updated_at               DateTime                  @default(now()) @db.Timestamptz(6)
+  college_accreditations   college_accreditations[]
+  college_fees             college_fees[]
+  cutoff_data              cutoff_data[]
+  data_import_jobs         data_import_jobs[]
+  counselling_authorities  counselling_authorities?  @relation(fields: [counselling_authority_id], references: [id], onUpdate: NoAction)
+  counselling_processes    counselling_processes?    @relation(fields: [counselling_process_id], references: [id], onUpdate: NoAction)
+  exams                    exams?                    @relation(fields: [exam_id], references: [id], onUpdate: NoAction)
+  exam_rank_data           exam_rank_data[]
+  exam_schedules           exam_schedules[]
+  hostel_data              hostel_data[]
+  percentile_rank_mapping  percentile_rank_mapping[]
+  placement_data           placement_data[]
+  seat_matrix              seat_matrix[]
+
+  @@index([adapter_key, data_type], map: "idx_data_sources_adapter")
+}
+
+/// This table contains check constraints and requires additional setup for migrations. Visit https://pris.ly/d/check-constraints for more info.
+/// This model or at least one of its fields has comments in the database, and requires an additional setup for migrations: Read more: https://pris.ly/d/database-comments
+/// This model contains an expression index which requires additional setup for migrations. Visit https://pris.ly/d/expression-indexes for more info.
+model exam_rank_data {
+  id                    Int            @id @default(autoincrement())
+  exam_id               Int            @db.SmallInt
+  academic_year         Int            @db.SmallInt
+  exam_session_id       Int?
+  category_id           Int?           @db.SmallInt
+  registered_candidates Int?
+  appeared_candidates   Int?
+  qualified_candidates  Int?
+  qualifying_percentile Decimal?       @db.Decimal(11, 8)
+  qualifying_marks      Decimal?       @db.Decimal(8, 3)
+  max_rank              BigInt?
+  source_id             Int?
+  created_at            DateTime       @default(now()) @db.Timestamptz(6)
+  updated_at            DateTime       @default(now()) @db.Timestamptz(6)
+  categories            categories?    @relation(fields: [category_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
+  exams                 exams          @relation(fields: [exam_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
+  exam_sessions         exam_sessions? @relation(fields: [exam_session_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
+  data_sources          data_sources?  @relation(fields: [source_id], references: [id], onUpdate: NoAction)
+}
+
+/// This table contains check constraints and requires additional setup for migrations. Visit https://pris.ly/d/check-constraints for more info.
+/// This model contains an expression index which requires additional setup for migrations. Visit https://pris.ly/d/expression-indexes for more info.
+model exam_schedules {
+  id              BigInt          @id @default(autoincrement())
+  exam_id         Int             @db.SmallInt
+  exam_session_id Int?
+  academic_year   Int             @db.SmallInt
+  event_type      exam_event_type
+  event_name      String
+  start_date      DateTime?       @db.Date
+  end_date        DateTime?       @db.Date
+  start_at        DateTime?       @db.Timestamptz(6)
+  end_at          DateTime?       @db.Timestamptz(6)
+  is_tentative    Boolean         @default(true)
+  detail_url      String?
+  notes           String?
+  source_id       Int?
+  created_at      DateTime        @default(now()) @db.Timestamptz(6)
+  updated_at      DateTime        @default(now()) @db.Timestamptz(6)
+  exams           exams           @relation(fields: [exam_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
+  exam_sessions   exam_sessions?  @relation(fields: [exam_session_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
+  data_sources    data_sources?   @relation(fields: [source_id], references: [id], onUpdate: NoAction, map: "fk_exam_schedules_source")
+  notifications   notifications[]
+
+  @@index([start_date, end_date], map: "idx_exam_schedules_window")
+  @@index([academic_year, exam_id, event_type], map: "idx_exam_schedules_year")
+}
+
+/// This table contains check constraints and requires additional setup for migrations. Visit https://pris.ly/d/check-constraints for more info.
+model exam_sessions {
+  id                      Int                       @id @default(autoincrement())
+  exam_id                 Int                       @db.SmallInt
+  academic_year           Int                       @db.SmallInt
+  session_no              Int                       @default(1) @db.SmallInt
+  name                    String?
+  exam_date_from          DateTime?                 @db.Date
+  exam_date_to            DateTime?                 @db.Date
+  result_date             DateTime?                 @db.Date
+  created_at              DateTime                  @default(now()) @db.Timestamptz(6)
+  updated_at              DateTime                  @default(now()) @db.Timestamptz(6)
+  exam_rank_data          exam_rank_data[]
+  exam_schedules          exam_schedules[]
+  exams                   exams                     @relation(fields: [exam_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
+  percentile_rank_mapping percentile_rank_mapping[]
+  user_exam_scores        user_exam_scores[]
+
+  @@unique([exam_id, academic_year, session_no])
+  @@index([academic_year, exam_id], map: "idx_exam_sessions_year")
+}
+
+/// This model or at least one of its fields has comments in the database, and requires an additional setup for migrations: Read more: https://pris.ly/d/database-comments
+model exams {
+  id                         Int                          @id @default(autoincrement()) @db.SmallInt
+  code                       String                       @unique
+  name                       String
+  short_name                 String?
+  level                      exam_level
+  conducting_authority       String
+  official_website           String?
+  home_state_id              Int?                         @db.SmallInt
+  primary_score_type         score_type                   @default(rank)
+  has_rank                   Boolean                      @default(true)
+  has_percentile             Boolean                      @default(false)
+  has_marks                  Boolean                      @default(true)
+  is_multi_session           Boolean                      @default(false)
+  eligibility_summary        String?
+  description                String?
+  logo_url                   String?
+  display_order              Int                          @default(100) @db.SmallInt
+  is_active                  Boolean                      @default(true)
+  created_at                 DateTime                     @default(now()) @db.Timestamptz(6)
+  updated_at                 DateTime                     @default(now()) @db.Timestamptz(6)
+  counselling_exams          counselling_exams[]
+  cutoff_data                cutoff_data[]
+  data_sources               data_sources[]
+  exam_rank_data             exam_rank_data[]
+  exam_schedules             exam_schedules[]
+  exam_sessions              exam_sessions[]
+  states                     states?                      @relation(fields: [home_state_id], references: [id], onUpdate: NoAction)
+  notification_subscriptions notification_subscriptions[]
+  notifications              notifications[]
+  percentile_rank_mapping    percentile_rank_mapping[]
+  prediction_requests        prediction_requests[]
+  user_exam_scores           user_exam_scores[]
+
+  @@index([name(ops: raw("gin_trgm_ops"))], map: "idx_exams_name_trgm", type: Gin)
+}
+
+/// This table contains check constraints and requires additional setup for migrations. Visit https://pris.ly/d/check-constraints for more info.
+model genders {
+  id                        Int                  @id @default(autoincrement()) @db.SmallInt
+  code                      String               @unique
+  name                      String
+  allowed_applicant_genders applicant_gender[]
+  is_supernumerary          Boolean              @default(false)
+  display_order             Int                  @default(100) @db.SmallInt
+  created_at                DateTime             @default(now()) @db.Timestamptz(6)
+  updated_at                DateTime             @default(now()) @db.Timestamptz(6)
+  cutoff_data               cutoff_data[]
+  prediction_results        prediction_results[]
+  seat_matrix               seat_matrix[]
+}
+
+/// This table contains check constraints and requires additional setup for migrations. Visit https://pris.ly/d/check-constraints for more info.
+/// This model contains an expression index which requires additional setup for migrations. Visit https://pris.ly/d/expression-indexes for more info.
+model hostel_data {
+  id                       BigInt            @id @default(autoincrement())
+  college_id               Int
+  campus_id                Int?
+  academic_year            Int               @db.SmallInt
+  hostel_for               String            @default("all")
+  total_capacity           Int?
+  is_guaranteed_first_year Boolean?
+  room_types               String[]
+  annual_fee_min           Decimal?          @db.Decimal(12, 2)
+  annual_fee_max           Decimal?          @db.Decimal(12, 2)
+  mess_type                String?
+  amenities                String[]
+  notes                    String?
+  source_id                Int?
+  created_at               DateTime          @default(now()) @db.Timestamptz(6)
+  updated_at               DateTime          @default(now()) @db.Timestamptz(6)
+  college_campuses         college_campuses? @relation(fields: [campus_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
+  colleges                 colleges          @relation(fields: [college_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
+  data_sources             data_sources?     @relation(fields: [source_id], references: [id], onUpdate: NoAction)
+}
+
+/// This table contains check constraints and requires additional setup for migrations. Visit https://pris.ly/d/check-constraints for more info.
+/// This model contains an expression index which requires additional setup for migrations. Visit https://pris.ly/d/expression-indexes for more info.
+model notification_subscriptions {
+  id          BigInt                 @id @default(autoincrement())
+  user_id     BigInt
+  exam_id     Int?                   @db.SmallInt
+  college_id  Int?
+  event_types exam_event_type[]
+  lead_days   Int                    @default(3) @db.SmallInt
+  channels    notification_channel[] @default([in_app, push])
+  is_active   Boolean                @default(true)
+  created_at  DateTime               @default(now()) @db.Timestamptz(6)
+  updated_at  DateTime               @default(now()) @db.Timestamptz(6)
+  colleges    colleges?              @relation(fields: [college_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
+  exams       exams?                 @relation(fields: [exam_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
+  users       users                  @relation(fields: [user_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
+}
+
+model notifications {
+  id             BigInt               @id @default(autoincrement())
+  user_id        BigInt?
+  channel        notification_channel @default(in_app)
+  title          String
+  body           String
+  payload        Json?
+  exam_id        Int?                 @db.SmallInt
+  schedule_id    BigInt?
+  scheduled_for  DateTime?            @db.Timestamptz(6)
+  sent_at        DateTime?            @db.Timestamptz(6)
+  read_at        DateTime?            @db.Timestamptz(6)
+  failed_reason  String?
+  created_at     DateTime             @default(now()) @db.Timestamptz(6)
+  exams          exams?               @relation(fields: [exam_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
+  exam_schedules exam_schedules?      @relation(fields: [schedule_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
+  users          users?               @relation(fields: [user_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
+}
+
+/// This table contains check constraints and requires additional setup for migrations. Visit https://pris.ly/d/check-constraints for more info.
+/// This model contains an expression index which requires additional setup for migrations. Visit https://pris.ly/d/expression-indexes for more info.
+model percentile_rank_mapping {
+  id                BigInt         @id @default(autoincrement())
+  exam_id           Int            @db.SmallInt
+  academic_year     Int            @db.SmallInt
+  exam_session_id   Int?
+  category_id       Int?           @db.SmallInt
+  percentile        Decimal        @db.Decimal(11, 8)
+  rank_from         BigInt
+  rank_to           BigInt
+  is_official       Boolean        @default(false)
+  estimation_method String         @default("official_published")
+  confidence        Decimal?       @db.Decimal(3, 2)
+  source_id         Int?
+  created_at        DateTime       @default(now()) @db.Timestamptz(6)
+  updated_at        DateTime       @default(now()) @db.Timestamptz(6)
+  categories        categories?    @relation(fields: [category_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
+  exams             exams          @relation(fields: [exam_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
+  exam_sessions     exam_sessions? @relation(fields: [exam_session_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
+  data_sources      data_sources?  @relation(fields: [source_id], references: [id], onUpdate: NoAction)
+}
+
+/// This table contains check constraints and requires additional setup for migrations. Visit https://pris.ly/d/check-constraints for more info.
+/// This model contains an expression index which requires additional setup for migrations. Visit https://pris.ly/d/expression-indexes for more info.
+model placement_data {
+  id                   BigInt            @id @default(autoincrement())
+  college_id           Int
+  college_branch_id    BigInt?
+  academic_year        Int               @db.SmallInt
+  students_eligible    Int?
+  students_placed      Int?
+  placement_percentage Decimal?          @db.Decimal(5, 2)
+  highest_package      Decimal?          @db.Decimal(14, 2)
+  average_package      Decimal?          @db.Decimal(14, 2)
+  median_package       Decimal?          @db.Decimal(14, 2)
+  lowest_package       Decimal?          @db.Decimal(14, 2)
+  currency             String            @default("INR") @db.Char(3)
+  total_recruiters     Int?
+  top_recruiters       String[]
+  source_id            Int?
+  created_at           DateTime          @default(now()) @db.Timestamptz(6)
+  updated_at           DateTime          @default(now()) @db.Timestamptz(6)
+  college_branches     college_branches? @relation(fields: [college_branch_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
+  colleges             colleges          @relation(fields: [college_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
+  data_sources         data_sources?     @relation(fields: [source_id], references: [id], onUpdate: NoAction)
+
+  @@index([college_id, academic_year(sort: Desc)], map: "idx_placement_lookup")
+}
+
+/// This table contains check constraints and requires additional setup for migrations. Visit https://pris.ly/d/check-constraints for more info.
+model prediction_requests {
+  id                         BigInt                      @id @default(autoincrement())
+  uuid                       String                      @unique @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  user_id                    BigInt?
+  session_key                String?
+  exam_id                    Int                         @db.SmallInt
+  academic_year              Int                         @db.SmallInt
+  input_kind                 prediction_input_kind       @default(rank)
+  input_rank                 BigInt?
+  input_percentile           Decimal?                    @db.Decimal(11, 8)
+  input_marks                Decimal?                    @db.Decimal(8, 3)
+  resolved_rank              BigInt?
+  resolved_rank_is_estimated Boolean                     @default(false)
+  category_id                Int?                        @db.SmallInt
+  applicant_gender           applicant_gender?
+  is_pwd                     Boolean                     @default(false)
+  home_state_id              Int?                        @db.SmallInt
+  filter_branch_ids          Int[]                       @db.SmallInt
+  filter_state_ids           Int[]                       @db.SmallInt
+  filter_college_types       college_type[]
+  filter_max_fee             Decimal?                    @db.Decimal(12, 2)
+  weight_profile_id          Int?                        @db.SmallInt
+  what_if_parent_id          BigInt?
+  result_count               Int                         @default(0)
+  duration_ms                Int?
+  created_at                 DateTime                    @default(now()) @db.Timestamptz(6)
+  categories                 categories?                 @relation(fields: [category_id], references: [id], onUpdate: NoAction)
+  exams                      exams                       @relation(fields: [exam_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
+  states                     states?                     @relation(fields: [home_state_id], references: [id], onUpdate: NoAction)
+  users                      users?                      @relation(fields: [user_id], references: [id], onUpdate: NoAction)
+  prediction_weight_profiles prediction_weight_profiles? @relation(fields: [weight_profile_id], references: [id], onUpdate: NoAction)
+  prediction_requests        prediction_requests?        @relation("prediction_requestsToprediction_requests", fields: [what_if_parent_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
+  other_prediction_requests  prediction_requests[]       @relation("prediction_requestsToprediction_requests")
+  prediction_results         prediction_results[]
+
+  @@index([exam_id, academic_year, created_at(sort: Desc)], map: "idx_prediction_requests_exam")
+}
+
+/// This table contains check constraints and requires additional setup for migrations. Visit https://pris.ly/d/check-constraints for more info.
+model prediction_results {
+  id                       BigInt                  @id @default(autoincrement())
+  prediction_request_id    BigInt
+  college_branch_id        BigInt
+  college_id               Int
+  branch_id                Int                     @db.SmallInt
+  counselling_authority_id Int                     @db.SmallInt
+  seat_type_id             Int                     @db.SmallInt
+  quota_id                 Int                     @db.SmallInt
+  gender_id                Int                     @db.SmallInt
+  grade                    match_grade
+  score                    Decimal                 @db.Decimal(6, 2)
+  weighted_closing_rank    BigInt?
+  best_closing_rank        BigInt?
+  worst_closing_rank       BigInt?
+  latest_closing_rank      BigInt?
+  rank_margin              BigInt?
+  years_available          Int                     @default(0) @db.SmallInt
+  trend_slope              Decimal?                @db.Decimal(12, 2)
+  cutoff_history           Json?
+  display_rank             Int?                    @db.SmallInt
+  created_at               DateTime                @default(now()) @db.Timestamptz(6)
+  branches                 branches                @relation(fields: [branch_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
+  college_branches         college_branches        @relation(fields: [college_branch_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
+  colleges                 colleges                @relation(fields: [college_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
+  counselling_authorities  counselling_authorities @relation(fields: [counselling_authority_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
+  genders                  genders                 @relation(fields: [gender_id], references: [id], onUpdate: NoAction)
+  prediction_requests      prediction_requests     @relation(fields: [prediction_request_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
+  quotas                   quotas                  @relation(fields: [quota_id], references: [id], onUpdate: NoAction)
+  seat_types               seat_types              @relation(fields: [seat_type_id], references: [id], onUpdate: NoAction)
+
+  @@unique([prediction_request_id, college_branch_id, seat_type_id, quota_id, gender_id])
+  @@index([prediction_request_id, grade, score(sort: Desc)], map: "idx_prediction_results_grade")
+  @@index([prediction_request_id, display_rank], map: "idx_prediction_results_request")
+}
+
+/// This table contains check constraints and requires additional setup for migrations. Visit https://pris.ly/d/check-constraints for more info.
+model prediction_weight_profiles {
+  id                       Int                       @id @default(autoincrement()) @db.SmallInt
+  code                     String                    @unique
+  name                     String
+  description              String?
+  counselling_authority_id Int?                      @db.SmallInt
+  is_active                Boolean                   @default(false)
+  strong_match_factor      Decimal                   @default(0.900) @db.Decimal(4, 3)
+  borderline_factor        Decimal                   @default(1.100) @db.Decimal(4, 3)
+  min_years_for_strong     Int                       @default(2) @db.SmallInt
+  created_at               DateTime                  @default(now()) @db.Timestamptz(6)
+  updated_at               DateTime                  @default(now()) @db.Timestamptz(6)
+  prediction_requests      prediction_requests[]
+  counselling_authorities  counselling_authorities?  @relation(fields: [counselling_authority_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
+  prediction_year_weights  prediction_year_weights[]
+}
+
+/// This table contains check constraints and requires additional setup for migrations. Visit https://pris.ly/d/check-constraints for more info.
+/// This model or at least one of its fields has comments in the database, and requires an additional setup for migrations: Read more: https://pris.ly/d/database-comments
+model prediction_year_weights {
+  id                         Int                        @id @default(autoincrement())
+  profile_id                 Int                        @db.SmallInt
+  year_offset                Int                        @db.SmallInt
+  weight                     Decimal                    @db.Decimal(5, 4)
+  created_at                 DateTime                   @default(now()) @db.Timestamptz(6)
+  prediction_weight_profiles prediction_weight_profiles @relation(fields: [profile_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
+
+  @@unique([profile_id, year_offset])
+}
+
+/// This table contains check constraints and requires additional setup for migrations. Visit https://pris.ly/d/check-constraints for more info.
+model quotas {
+  id                        Int                  @id @default(autoincrement()) @db.SmallInt
+  code                      String               @unique
+  name                      String
+  requires_home_state_match Boolean              @default(false)
+  requires_other_state      Boolean              @default(false)
+  description               String?
+  display_order             Int                  @default(100) @db.SmallInt
+  created_at                DateTime             @default(now()) @db.Timestamptz(6)
+  updated_at                DateTime             @default(now()) @db.Timestamptz(6)
+  college_fees              college_fees[]
+  cutoff_data               cutoff_data[]
+  prediction_results        prediction_results[]
+  seat_matrix               seat_matrix[]
+}
+
+model schema_migrations {
+  filename   String   @id
+  checksum   String
+  applied_at DateTime @default(now()) @db.Timestamptz(6)
+}
+
+/// This table contains check constraints and requires additional setup for migrations. Visit https://pris.ly/d/check-constraints for more info.
+/// This model contains an expression index which requires additional setup for migrations. Visit https://pris.ly/d/expression-indexes for more info.
+model seat_matrix {
+  id                     BigInt                @id @default(autoincrement())
+  academic_year          Int                   @db.SmallInt
+  counselling_process_id Int
+  counselling_round_id   Int?
+  college_branch_id      BigInt
+  seat_type_id           Int                   @db.SmallInt
+  quota_id               Int                   @db.SmallInt
+  gender_id              Int                   @db.SmallInt
+  total_seats            Int                   @db.SmallInt
+  filled_seats           Int?                  @db.SmallInt
+  source_id              Int?
+  import_job_id          BigInt?
+  created_at             DateTime              @default(now()) @db.Timestamptz(6)
+  updated_at             DateTime              @default(now()) @db.Timestamptz(6)
+  college_branches       college_branches      @relation(fields: [college_branch_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
+  counselling_processes  counselling_processes @relation(fields: [counselling_process_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
+  counselling_rounds     counselling_rounds?   @relation(fields: [counselling_round_id], references: [id], onUpdate: NoAction)
+  genders                genders               @relation(fields: [gender_id], references: [id], onUpdate: NoAction)
+  data_import_jobs       data_import_jobs?     @relation(fields: [import_job_id], references: [id], onUpdate: NoAction)
+  quotas                 quotas                @relation(fields: [quota_id], references: [id], onUpdate: NoAction)
+  seat_types             seat_types            @relation(fields: [seat_type_id], references: [id], onUpdate: NoAction)
+  data_sources           data_sources?         @relation(fields: [source_id], references: [id], onUpdate: NoAction)
+
+  @@index([college_branch_id, academic_year(sort: Desc)], map: "idx_seat_matrix_program")
+}
+
+model seat_types {
+  id                 Int                  @id @default(autoincrement()) @db.SmallInt
+  code               String               @unique
+  name               String
+  category_id        Int                  @db.SmallInt
+  is_pwd             Boolean              @default(false)
+  display_order      Int                  @default(100) @db.SmallInt
+  created_at         DateTime             @default(now()) @db.Timestamptz(6)
+  updated_at         DateTime             @default(now()) @db.Timestamptz(6)
+  cutoff_data        cutoff_data[]
+  prediction_results prediction_results[]
+  seat_matrix        seat_matrix[]
+  categories         categories           @relation(fields: [category_id], references: [id], onUpdate: NoAction)
+
+  @@unique([category_id, is_pwd])
+}
+
+model specializations {
+  id               Int                @id @default(autoincrement())
+  branch_id        Int                @db.SmallInt
+  code             String             @unique
+  name             String
+  description      String?
+  is_popular       Boolean            @default(false)
+  display_order    Int                @default(100) @db.SmallInt
+  created_at       DateTime           @default(now()) @db.Timestamptz(6)
+  updated_at       DateTime           @default(now()) @db.Timestamptz(6)
+  branch_aliases   branch_aliases[]
+  college_branches college_branches[]
+  branches         branches           @relation(fields: [branch_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
+
+  @@unique([branch_id, name])
+}
+
+/// This table contains check constraints and requires additional setup for migrations. Visit https://pris.ly/d/check-constraints for more info.
+/// This model or at least one of its fields has comments in the database, and requires an additional setup for migrations: Read more: https://pris.ly/d/database-comments
+model states {
+  id                                                    Int                       @id @default(autoincrement()) @db.SmallInt
+  code                                                  String                    @unique
+  name                                                  String                    @unique
+  kind                                                  String                    @default("state")
+  created_at                                            DateTime                  @default(now()) @db.Timestamptz(6)
+  updated_at                                            DateTime                  @default(now()) @db.Timestamptz(6)
+  cities                                                cities[]
+  college_campuses                                      college_campuses[]
+  colleges                                              colleges[]
+  counselling_authorities                               counselling_authorities[]
+  exams                                                 exams[]
+  prediction_requests                                   prediction_requests[]
+  user_profiles_user_profiles_domicile_state_idTostates user_profiles[]           @relation("user_profiles_domicile_state_idTostates")
+  user_profiles_user_profiles_home_state_idTostates     user_profiles[]           @relation("user_profiles_home_state_idTostates")
+}
+
+/// This table contains check constraints and requires additional setup for migrations. Visit https://pris.ly/d/check-constraints for more info.
+/// This model contains an expression index which requires additional setup for migrations. Visit https://pris.ly/d/expression-indexes for more info.
+model user_exam_scores {
+  id              BigInt         @id @default(autoincrement())
+  user_id         BigInt
+  exam_id         Int            @db.SmallInt
+  academic_year   Int            @db.SmallInt
+  exam_session_id Int?
+  roll_number     String?
+  crl_rank        BigInt?
+  category_rank   BigInt?
+  state_rank      BigInt?
+  percentile      Decimal?       @db.Decimal(11, 8)
+  marks           Decimal?       @db.Decimal(8, 3)
+  is_rank_derived Boolean        @default(false)
+  created_at      DateTime       @default(now()) @db.Timestamptz(6)
+  updated_at      DateTime       @default(now()) @db.Timestamptz(6)
+  exams           exams          @relation(fields: [exam_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
+  exam_sessions   exam_sessions? @relation(fields: [exam_session_id], references: [id], onUpdate: NoAction)
+  users           users          @relation(fields: [user_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
+
+  @@index([user_id, academic_year(sort: Desc)], map: "idx_user_exam_scores_user")
+}
+
+/// This table contains check constraints and requires additional setup for migrations. Visit https://pris.ly/d/check-constraints for more info.
+model user_profiles {
+  user_id                                        BigInt            @id
+  gender                                         applicant_gender?
+  category_id                                    Int?              @db.SmallInt
+  is_pwd                                         Boolean           @default(false)
+  home_state_id                                  Int?              @db.SmallInt
+  domicile_state_id                              Int?              @db.SmallInt
+  class_12_board                                 String?
+  class_12_percentage                            Decimal?          @db.Decimal(5, 2)
+  pcm_percentage                                 Decimal?          @db.Decimal(5, 2)
+  passing_year                                   Int?              @db.SmallInt
+  preferred_state_ids                            Int[]             @db.SmallInt
+  preferred_branch_ids                           Int[]             @db.SmallInt
+  preferred_college_types                        college_type[]
+  max_annual_budget                              Decimal?          @db.Decimal(12, 2)
+  hostel_required                                Boolean?
+  created_at                                     DateTime          @default(now()) @db.Timestamptz(6)
+  updated_at                                     DateTime          @default(now()) @db.Timestamptz(6)
+  categories                                     categories?       @relation(fields: [category_id], references: [id], onUpdate: NoAction)
+  states_user_profiles_domicile_state_idTostates states?           @relation("user_profiles_domicile_state_idTostates", fields: [domicile_state_id], references: [id], onUpdate: NoAction)
+  states_user_profiles_home_state_idTostates     states?           @relation("user_profiles_home_state_idTostates", fields: [home_state_id], references: [id], onUpdate: NoAction)
+  users                                          users             @relation(fields: [user_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
+}
+
+model user_shortlists {
+  id                BigInt           @id @default(autoincrement())
+  user_id           BigInt
+  college_branch_id BigInt
+  preference_order  Int?             @db.SmallInt
+  note              String?
+  created_at        DateTime         @default(now()) @db.Timestamptz(6)
+  updated_at        DateTime         @default(now()) @db.Timestamptz(6)
+  college_branches  college_branches @relation(fields: [college_branch_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
+  users             users            @relation(fields: [user_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
+
+  @@unique([user_id, college_branch_id])
+  @@index([user_id, preference_order], map: "idx_shortlists_user")
+}
+
+/// This table contains check constraints and requires additional setup for migrations. Visit https://pris.ly/d/check-constraints for more info.
+model users {
+  id                         BigInt                       @id @default(autoincrement())
+  uuid                       String                       @unique @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  email                      String?                      @db.Citext
+  phone                      String?
+  password_hash              String?
+  role                       user_role                    @default(student)
+  full_name                  String?
+  avatar_url                 String?
+  email_verified_at          DateTime?                    @db.Timestamptz(6)
+  phone_verified_at          DateTime?                    @db.Timestamptz(6)
+  last_login_at              DateTime?                    @db.Timestamptz(6)
+  is_active                  Boolean                      @default(true)
+  created_at                 DateTime                     @default(now()) @db.Timestamptz(6)
+  updated_at                 DateTime                     @default(now()) @db.Timestamptz(6)
+  data_change_logs           data_change_logs[]
+  data_import_jobs           data_import_jobs[]
+  notification_subscriptions notification_subscriptions[]
+  notifications              notifications[]
+  prediction_requests        prediction_requests[]
+  user_exam_scores           user_exam_scores[]
+  user_profiles              user_profiles?
+  user_shortlists            user_shortlists[]
+}
+
+view v_exam_calendar {
+  schedule_id     BigInt?
+  academic_year   Int?             @db.SmallInt
+  exam_id         Int?             @db.SmallInt
+  exam_code       String?
+  exam_name       String?
+  exam_short_name String?
+  exam_level      exam_level?
+  logo_url        String?
+  home_state_code String?
+  session_no      Int?             @db.SmallInt
+  session_name    String?
+  event_type      exam_event_type?
+  event_name      String?
+  start_date      DateTime?        @db.Date
+  end_date        DateTime?        @db.Date
+  start_at        DateTime?        @db.Timestamptz(6)
+  end_at          DateTime?        @db.Timestamptz(6)
+  is_tentative    Boolean?
+  detail_url      String?
+  notes           String?
+}
+
+view v_program_summary {
+  college_branch_id    BigInt?
+  program_name         String?
+  degree               degree_type?
+  duration_years       Decimal?        @db.Decimal(3, 1)
+  total_intake         Int?            @db.SmallInt
+  college_id           Int?
+  college_name         String?
+  college_short_name   String?
+  college_slug         String?
+  college_type         college_type?
+  ownership            ownership_type?
+  nirf_rank_latest     Int?            @db.SmallInt
+  has_hostel           Boolean?
+  state_id             Int?            @db.SmallInt
+  state_name           String?
+  city_name            String?
+  branch_id            Int?            @db.SmallInt
+  branch_code          String?
+  branch_name          String?
+  specialization_id    Int?
+  specialization_name  String?
+  tuition_fee_annual   Decimal?        @db.Decimal(12, 2)
+  fee_year             Int?            @db.SmallInt
+  average_package      Decimal?        @db.Decimal(14, 2)
+  highest_package      Decimal?        @db.Decimal(14, 2)
+  placement_percentage Decimal?        @db.Decimal(5, 2)
+  placement_year       Int?            @db.SmallInt
+}
+
+enum accreditation_kind {
+  NIRF
+  NAAC
+  NBA
+  AICTE
+  UGC
+  ABET
+}
+
+enum applicant_gender {
+  male
+  female
+  other
+}
+
+enum change_action {
+  insert
+  update
+  delete
+}
+
+enum college_type {
+  IIT
+  NIT
+  IIIT
+  GFTI
+  STATE_GOVT
+  GOVT_AIDED
+  PRIVATE
+  DEEMED
+  AUTONOMOUS
+}
+
+enum counselling_scope {
+  national
+  state
+  institute
+}
+
+enum degree_type {
+  BTech
+  BE
+  BArch
+  BPlan
+  Dual
+  Integrated
+}
+
+enum exam_event_type {
+  notification
+  application_start
+  application_end
+  fee_payment_end
+  correction_window
+  admit_card
+  exam
+  answer_key
+  objection_window
+  result
+  counselling_registration
+  counselling_choice_filling
+  seat_allotment
+  reporting
+  counselling_end
+}
+
+enum exam_level {
+  national
+  state
+  university
+  deemed
+}
+
+enum import_status {
+  queued
+  running
+  parsed
+  validation_failed
+  pending_review
+  approved
+  rejected
+  published
+  failed
+}
+
+enum match_grade {
+  strong_historical_match
+  historical_match
+  borderline
+  outside_historical_range
+}
+
+enum notification_channel {
+  in_app
+  push
+  email
+}
+
+enum ownership_type {
+  government
+  government_aided
+  private
+  public_private_partnership
+}
+
+enum prediction_input_kind {
+  rank
+  percentile
+  marks
+}
+
+enum round_kind {
+  regular
+  special
+  spot
+  mop_up
+  stray_vacancy
+}
+
+enum score_type {
+  rank
+  percentile
+  marks
+  composite
+}
+
+enum source_kind {
+  api
+  html
+  pdf
+  xlsx
+  csv
+  manual
+}
+
+enum source_tier {
+  official_authority
+  official_counselling
+  official_pdf
+  official_institute
+  secondary
+}
+
+enum staging_row_status {
+  pending
+  valid
+  invalid
+  duplicate
+  imported
+  discarded
+}
+
+enum user_role {
+  student
+  reviewer
+  data_editor
+  admin
+}

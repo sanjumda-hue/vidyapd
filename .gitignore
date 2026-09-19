@@ -1,0 +1,16 @@
+# OS / editor
+.DS_Store
+Thumbs.db
+*.swp
+.idea/
+.vscode/
+
+# Logs
+*.log
+
+# Local environment — never commit real secrets; see api/.env.example
+.env
+.env.local
+
+# Local PostgreSQL scratch (portable build lives outside the repo anyway)
+pgsql/
