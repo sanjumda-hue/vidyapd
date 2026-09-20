@@ -121,6 +121,68 @@ estimates in the UI; the API sets `rankIsEstimated` and `rankEstimateMethod` for
 exactly this. If none of the three can produce an answer the function returns no
 rows and the API asks the student for a rank instead of inventing one.
 
+**Step 3 wants the right denominator.** It reads `exam_rank_data` with
+`ORDER BY exam_session_id NULLS FIRST`, so it prefers the row with no session —
+the all-sessions aggregate — and that is deliberate. A JEE Main rank is computed
+across both sessions on unique candidates, so a single session's attendance is
+the wrong number to divide by: Session 1 of 2026 saw about 13.0 lakh against
+roughly 14.7 lakh unique overall, a 13% gap under a method that advertises a 3%
+band. Load one row per exam-year with `exam_session_id = NULL`,
+`category_id = NULL` and the unique merit-list count.
+
+**Until that row exists, the input is switched off rather than left to fail.**
+`/reference/bootstrap` reports `hasPercentileData` per exam, computed from the
+same two tables step 1–3 read, and the form shows the Rank/Percentile toggle
+only when it is true. `hasPercentile` alone says the exam reports a percentile,
+which is not the same question — and answering the wrong one put a button on the
+main screen that returned a 400 every time it was pressed.
+
+---
+
+## Marks input
+
+BITS is the one authority so far that does not allot on a rank. It admits
+directly off the BITSAT merit list and publishes a cut-off **score** per
+programme, which inverts every comparison in the engine above: a higher number
+is a better result.
+
+That runs through a mirror of the stack rather than a flag on it —
+`mv_program_score_trend`, `fn_weighted_score`, `fn_grade_score_match`,
+`fn_predict_colleges_by_score`. Sharing one body would have meant a sign test on
+the reach cut-off, on each of the three grade comparisons and on the ordering,
+in a function the rank path's 327,965 rows already depend on.
+
+Three things differ beyond the sign:
+
+**Everything is compared in percent of the paper total.** BITSAT was marked out
+of 450 through 2021 and out of 390 from 2022, so raw scores are not comparable
+across that boundary — 306/450 and 226/390 are near enough the same standard
+while the raw figures suggest a collapse. `cutoff_data.max_score` is therefore
+mandatory alongside any `closing_score` (`chk_cutoff_score_needs_max`), and the
+function converts back to the candidate's own total on the way out so every
+figure it returns is in the units they typed.
+
+**The grade factors divide instead of multiplying.** `strong_match_factor` 0.900
+means "10% better than the strictest year" either way: `rank <= best * 0.9`, or
+`pct >= toughest / 0.9`. One profile tunes both engines. The mirror breaks only
+at the ceiling — a percentage stops at 100 where a rank has no floor — so the
+strong threshold is clamped there, which at a 95% cut-off honestly reads as "a
+perfect paper".
+
+**The logistic is steeper: 12.0, against the rank path's 3.0.** Ranks span
+orders of magnitude; a whole field of score cut-offs fits between 35% and 80% of
+the paper. At 3.0 the entire BITSAT spread compresses into roughly 38–60 and
+every programme looks alike.
+
+`trend_slope` also changes meaning: percentage points of the paper per year, and
+**positive** means tightening. The rank view's is places per year and negative
+means tightening. `prediction_results` stores both kinds in the one column, and
+which one a row carries is decided by whether it has a `closing_score`.
+
+The API picks the engine from `exams.primary_score_type = 'marks'` and says
+which it used in `measure`, so a client never has to guess which way "better"
+points. Sending a rank to a marks-based exam is a 400, not a silent conversion.
+
 ---
 
 ## Tuning without a deploy
