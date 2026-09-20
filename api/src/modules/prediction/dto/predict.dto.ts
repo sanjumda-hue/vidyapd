@@ -33,22 +33,46 @@ export class PredictDto {
   @Max(2100)
   academicYear?: number;
 
-  // Exactly one of rank / percentile is required. A percentile is converted
-  // through fn_percentile_to_rank and the response says the rank was derived.
+  // Exactly one of rank / percentile / score is required.
+  //
+  // A percentile is converted through fn_percentile_to_rank and the response
+  // says the rank was derived. A score is NOT converted: marks-based exams have
+  // no rank to convert to, and they run through a separate engine.
   @ApiPropertyOptional({ example: 45821 })
-  @ValidateIf((o: PredictDto) => o.percentile === undefined)
+  @ValidateIf((o: PredictDto) => o.percentile === undefined && o.score === undefined)
   @Type(() => Number)
   @IsInt()
   @Min(1)
   rank?: number;
 
   @ApiPropertyOptional({ example: 94.2 })
-  @ValidateIf((o: PredictDto) => o.rank === undefined)
+  @ValidateIf((o: PredictDto) => o.rank === undefined && o.score === undefined)
   @Type(() => Number)
   @IsNumber()
   @Min(0)
   @Max(100)
   percentile?: number;
+
+  @ApiPropertyOptional({
+    example: 300,
+    description: 'Marks-based exams only (BITSAT). Out of maxScore.',
+  })
+  @ValidateIf((o: PredictDto) => o.rank === undefined && o.percentile === undefined)
+  @Type(() => Number)
+  @IsNumber()
+  @Min(1)
+  score?: number;
+
+  @ApiPropertyOptional({
+    example: 390,
+    description:
+      'Paper total the score is out of. Defaults to the most recent total on record for the exam - BITSAT moved from 450 to 390 in 2022, so an older score must say which.',
+  })
+  @IsOptional()
+  @Type(() => Number)
+  @IsNumber()
+  @Min(1)
+  maxScore?: number;
 
   @ApiProperty({ example: 'OBC_NCL' })
   @IsString()

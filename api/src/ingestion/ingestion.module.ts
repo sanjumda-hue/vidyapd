@@ -6,6 +6,9 @@ import { AdapterRegistry } from './adapters/adapter.registry';
 import { ComedkAdapter } from './adapters/comedk.adapter';
 import { JosaaAdapter } from './adapters/josaa.adapter';
 import { CutoffValidator } from './pipeline/cutoff-validator';
+import { EntityResolver } from './pipeline/entity-resolver';
+import { ImportRunner } from './pipeline/import-runner';
+import { TabularParser } from './pipeline/tabular-parser';
 import { SourcePollerService } from './scheduler/source-poller.service';
 
 /**
@@ -16,8 +19,16 @@ const ADAPTERS = [JosaaAdapter, ComedkAdapter];
 
 @Module({
   imports: [ConfigModule, ScheduleModule.forRoot()],
-  providers: [AdapterRegistry, CutoffValidator, SourcePollerService, ...ADAPTERS],
-  exports: [AdapterRegistry, CutoffValidator],
+  providers: [
+    AdapterRegistry,
+    CutoffValidator,
+    TabularParser,
+    EntityResolver,
+    ImportRunner,
+    SourcePollerService,
+    ...ADAPTERS,
+  ],
+  exports: [AdapterRegistry, CutoffValidator, ImportRunner, TabularParser],
 })
 export class IngestionModule implements OnModuleInit {
   constructor(

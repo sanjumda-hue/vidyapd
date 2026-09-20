@@ -20,6 +20,10 @@ export interface NormalizedCutoffRow {
   closingRank: number | null;
   openingPercentile: number | null;
   closingPercentile: number | null;
+  openingScore: number | null;
+  closingScore: number | null;
+  maxScore: number | null;
+  isPreparatory: boolean;
 }
 
 /**
@@ -82,11 +86,12 @@ export class CutoffValidator {
 
     const hasRank = raw.openingRank != null || raw.closingRank != null;
     const hasPercentile = raw.openingPercentile != null || raw.closingPercentile != null;
-    if (!hasRank && !hasPercentile) {
+    const hasScore = raw.openingScore != null || raw.closingScore != null;
+    if (!hasRank && !hasPercentile && !hasScore) {
       errors.push({
         code: 'NO_MEASURE',
         field: 'closingRank',
-        message: 'Row has neither a rank nor a percentile.',
+        message: 'Row has no rank, percentile or score.',
       });
     }
 
@@ -106,7 +111,12 @@ export class CutoffValidator {
       }
     }
 
-    if (raw.openingRank != null && raw.closingRank != null && raw.openingRank > raw.closingRank) {
+    if (
+      !raw.isPreparatory &&
+      raw.openingRank != null &&
+      raw.closingRank != null &&
+      raw.openingRank > raw.closingRank
+    ) {
       errors.push({
         code: 'RANK_ORDER',
         field: 'openingRank',
@@ -124,6 +134,57 @@ export class CutoffValidator {
         code: 'PERCENTILE_ORDER',
         field: 'openingPercentile',
         message: `Opening percentile ${raw.openingPercentile} is below closing ${raw.closingPercentile}.`,
+      });
+    }
+
+    // Scores mirror the rank rules, and mirror the CHECK constraints added in
+    // 021_cutoff_score_measure.sql. Duplicating them here is the point: the
+    // database aborts the whole batched INSERT on a violation, so a single bad
+    // row would fail an entire round's import. Caught here it is parked as one
+    // invalid row and the other 400 publish.
+    for (const [field, value] of [
+      ['openingScore', raw.openingScore],
+      ['closingScore', raw.closingScore],
+    ] as const) {
+      if (value != null && !(value > 0)) {
+        errors.push({ code: 'BAD_SCORE', field, message: `${field}=${value} is not a positive score.` });
+      }
+    }
+
+    if (raw.closingScore != null && raw.maxScore == null) {
+      errors.push({
+        code: 'SCORE_NEEDS_MAX',
+        field: 'maxScore',
+        message:
+          'A score needs the paper total it is out of; without it the row cannot be compared across years.',
+      });
+    }
+
+    if (raw.maxScore != null) {
+      for (const [field, value] of [
+        ['openingScore', raw.openingScore],
+        ['closingScore', raw.closingScore],
+      ] as const) {
+        if (value != null && value > raw.maxScore) {
+          errors.push({
+            code: 'SCORE_ABOVE_MAX',
+            field,
+            message: `${field}=${value} is above the paper total of ${raw.maxScore}.`,
+          });
+        }
+      }
+    }
+
+    // Like a percentile, the closing score is the LOWER of the pair.
+    if (
+      raw.openingScore != null &&
+      raw.closingScore != null &&
+      raw.openingScore < raw.closingScore
+    ) {
+      errors.push({
+        code: 'SCORE_ORDER',
+        field: 'openingScore',
+        message: `Opening score ${raw.openingScore} is below closing ${raw.closingScore}; columns may be swapped.`,
       });
     }
 

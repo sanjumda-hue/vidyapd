@@ -16,7 +16,9 @@
     "db:seed": "node ../db/migrate.js seed",
     "db:reset": "node ../db/migrate.js reset",
     "prisma:pull": "prisma db pull && prisma generate",
-    "prisma:generate": "prisma generate"
+    "prisma:generate": "prisma generate",
+    "import:cutoffs": "ts-node -r tsconfig-paths/register src/ingestion/cli/import-cutoffs.ts",
+    "import:all": "ts-node src/ingestion/cli/import-all.ts"
   },
   "dependencies": {
     "@nestjs/bull": "^10.2.3",

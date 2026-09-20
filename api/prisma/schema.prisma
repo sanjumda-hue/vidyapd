@@ -126,6 +126,7 @@ model college_branches {
   user_shortlists    user_shortlists[]
 
   @@unique([id, college_id, branch_id], map: "uq_college_branch_identity")
+  @@index([college_id, branch_id], map: "idx_college_branches_branch_lookup")
 }
 
 model college_campuses {
@@ -371,6 +372,7 @@ model cutoff_data {
   is_verified            Boolean               @default(false)
   imported_at            DateTime              @default(now()) @db.Timestamptz(6)
   updated_at             DateTime              @default(now()) @db.Timestamptz(6)
+  max_score              Decimal?              @db.Decimal(10, 4)
   categories             categories            @relation(fields: [category_id], references: [id], onUpdate: NoAction)
   counselling_processes  counselling_processes @relation(fields: [counselling_process_id], references: [id], onUpdate: NoAction)
   counselling_rounds     counselling_rounds    @relation(fields: [counselling_round_id], references: [id], onUpdate: NoAction)
@@ -383,7 +385,7 @@ model cutoff_data {
   college_branches       college_branches      @relation(fields: [college_branch_id, college_id, branch_id], references: [id, college_id, branch_id], onDelete: Cascade, onUpdate: NoAction, map: "fk_cutoff_program")
 
   @@id([academic_year, id])
-  @@unique([academic_year, counselling_process_id, round_no, college_branch_id, seat_type_id, quota_id, gender_id], map: "uq_cutoff_natural")
+  @@unique([academic_year, counselling_process_id, exam_id, round_no, college_branch_id, seat_type_id, quota_id, gender_id], map: "uq_cutoff_natural")
   @@index([college_id, branch_id, seat_type_id, quota_id, gender_id, academic_year(sort: Desc), round_no(sort: Desc)], map: "idx_cutoff_by_college")
   @@index([college_branch_id, seat_type_id, quota_id, gender_id, academic_year(sort: Desc), round_no(sort: Desc)], map: "idx_cutoff_by_program")
 }
@@ -772,6 +774,7 @@ model prediction_requests {
   result_count               Int                         @default(0)
   duration_ms                Int?
   created_at                 DateTime                    @default(now()) @db.Timestamptz(6)
+  resolved_max_score         Decimal?                    @db.Decimal(8, 3)
   categories                 categories?                 @relation(fields: [category_id], references: [id], onUpdate: NoAction)
   exams                      exams                       @relation(fields: [exam_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
   states                     states?                     @relation(fields: [home_state_id], references: [id], onUpdate: NoAction)
@@ -803,10 +806,16 @@ model prediction_results {
   latest_closing_rank      BigInt?
   rank_margin              BigInt?
   years_available          Int                     @default(0) @db.SmallInt
-  trend_slope              Decimal?                @db.Decimal(12, 2)
+  trend_slope              Decimal?                @db.Decimal(12, 4)
   cutoff_history           Json?
   display_rank             Int?                    @db.SmallInt
   created_at               DateTime                @default(now()) @db.Timestamptz(6)
+  weighted_closing_score   Decimal?                @db.Decimal(10, 2)
+  toughest_closing_score   Decimal?                @db.Decimal(10, 2)
+  easiest_closing_score    Decimal?                @db.Decimal(10, 2)
+  latest_closing_score     Decimal?                @db.Decimal(10, 2)
+  max_score                Decimal?                @db.Decimal(10, 2)
+  score_margin             Decimal?                @db.Decimal(10, 2)
   branches                 branches                @relation(fields: [branch_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
   college_branches         college_branches        @relation(fields: [college_branch_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
   colleges                 colleges                @relation(fields: [college_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
@@ -863,9 +872,12 @@ model quotas {
   display_order             Int                  @default(100) @db.SmallInt
   created_at                DateTime             @default(now()) @db.Timestamptz(6)
   updated_at                DateTime             @default(now()) @db.Timestamptz(6)
+  home_state_id             Int?                 @db.SmallInt
+  requires_declaration      Boolean              @default(false)
   college_fees              college_fees[]
   cutoff_data               cutoff_data[]
   prediction_results        prediction_results[]
+  states                    states?              @relation(fields: [home_state_id], references: [id], onDelete: Restrict, onUpdate: NoAction)
   seat_matrix               seat_matrix[]
 }
 
@@ -953,6 +965,7 @@ model states {
   counselling_authorities                               counselling_authorities[]
   exams                                                 exams[]
   prediction_requests                                   prediction_requests[]
+  quotas                                                quotas[]
   user_profiles_user_profiles_domicile_state_idTostates user_profiles[]           @relation("user_profiles_domicile_state_idTostates")
   user_profiles_user_profiles_home_state_idTostates     user_profiles[]           @relation("user_profiles_home_state_idTostates")
 }
@@ -1146,6 +1159,7 @@ enum degree_type {
   BPlan
   Dual
   Integrated
+  BPharm
 }
 
 enum exam_event_type {

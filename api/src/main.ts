@@ -8,6 +8,13 @@ import { AppModule } from './app.module';
 import { HttpExceptionFilter } from './common/filters/http-exception.filter';
 import { TransformInterceptor } from './common/interceptors/transform.interceptor';
 
+// PostgreSQL bigint columns arrive as JS BigInt, which JSON.stringify throws
+// on. Ids are safest as strings over the wire anyway -- they can exceed
+// Number.MAX_SAFE_INTEGER, and a silently rounded id is worse than a string.
+(BigInt.prototype as unknown as { toJSON(): string }).toJSON = function (this: bigint) {
+  return this.toString();
+};
+
 async function bootstrap(): Promise<void> {
   const app = await NestFactory.create(AppModule, { bufferLogs: true });
   const config = app.get(ConfigService);

@@ -52,6 +52,16 @@ export interface RawCutoffRow {
   closingRank?: number | null;
   openingPercentile?: number | null;
   closingPercentile?: number | null;
+  /** Marks-based exams (BITSAT) publish a score rather than a rank. */
+  openingScore?: number | null;
+  closingScore?: number | null;
+  /** The paper total, which changed from 450 to 390 in 2022. */
+  maxScore?: number | null;
+  /**
+   * True when either rank carried a trailing "P". Preparatory-course seats are
+   * ranked on their own list, so these must not be mixed into the main trend.
+   */
+  isPreparatory?: boolean;
   /** Everything else the source gave us, kept for the staging `raw` column. */
   extra?: Record<string, unknown>;
 }
