@@ -21,7 +21,11 @@ _$ExamOptionImpl _$$ExamOptionImplFromJson(Map<String, dynamic> json) =>
       name: json['name'] as String,
       level: json['level'] as String,
       hasPercentile: json['hasPercentile'] as bool,
+      hasPercentileData: json['hasPercentileData'] as bool? ?? false,
+      usesMarks: json['usesMarks'] as bool? ?? false,
+      maxScore: json['maxScore'] as num?,
       homeStateCode: json['homeStateCode'] as String?,
+      hasCutoffData: json['hasCutoffData'] as bool? ?? true,
     );
 
 Map<String, dynamic> _$$ExamOptionImplToJson(_$ExamOptionImpl instance) =>
@@ -30,7 +34,11 @@ Map<String, dynamic> _$$ExamOptionImplToJson(_$ExamOptionImpl instance) =>
       'name': instance.name,
       'level': instance.level,
       'hasPercentile': instance.hasPercentile,
+      'hasPercentileData': instance.hasPercentileData,
+      'usesMarks': instance.usesMarks,
+      'maxScore': instance.maxScore,
       'homeStateCode': instance.homeStateCode,
+      'hasCutoffData': instance.hasCutoffData,
     };
 
 _$BranchOptionImpl _$$BranchOptionImplFromJson(Map<String, dynamic> json) =>
@@ -70,6 +78,7 @@ _$ReferenceDataImpl _$$ReferenceDataImplFromJson(Map<String, dynamic> json) =>
       collegeTypes: (json['collegeTypes'] as List<dynamic>)
           .map((e) => e as String)
           .toList(),
+      hasDemoData: json['hasDemoData'] as bool? ?? false,
     );
 
 Map<String, dynamic> _$$ReferenceDataImplToJson(_$ReferenceDataImpl instance) =>
@@ -81,4 +90,5 @@ Map<String, dynamic> _$$ReferenceDataImplToJson(_$ReferenceDataImpl instance) =>
       'states': instance.states,
       'branches': instance.branches,
       'collegeTypes': instance.collegeTypes,
+      'hasDemoData': instance.hasDemoData,
     };

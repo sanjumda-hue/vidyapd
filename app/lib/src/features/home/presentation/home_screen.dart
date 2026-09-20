@@ -2,7 +2,9 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
+import '../../../core/theme/app_theme.dart';
 import '../../reference/data/reference_repository.dart';
+import '../../shared/page_heading.dart';
 
 class _Tile {
   const _Tile(this.icon, this.label, this.route, {this.ready = false});
@@ -16,10 +18,10 @@ const _tiles = [
   _Tile(Icons.auto_graph_rounded, 'Predict My College', '/predict', ready: true),
   _Tile(Icons.school_outlined, 'Entrance Exams', '/exams', ready: true),
   _Tile(Icons.calendar_month_outlined, 'Exam Calendar', '/calendar'),
-  _Tile(Icons.apartment_outlined, 'Colleges', '/colleges'),
+  _Tile(Icons.apartment_outlined, 'Colleges', '/colleges', ready: true),
   _Tile(Icons.workspace_premium_outlined, 'Branches', '/branches'),
-  _Tile(Icons.balance_outlined, 'Compare Colleges', '/compare'),
-  _Tile(Icons.favorite_border_rounded, 'My Shortlist', '/shortlist'),
+  _Tile(Icons.balance_outlined, 'Compare Colleges', '/compare', ready: true),
+  _Tile(Icons.favorite_border_rounded, 'My Shortlist', '/shortlist', ready: true),
 ];
 
 class HomeScreen extends ConsumerWidget {
@@ -27,54 +29,58 @@ class HomeScreen extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final theme = Theme.of(context);
     // Warm the lookup cache here so the predict form opens instantly.
     final reference = ref.watch(referenceDataProvider);
 
     return Scaffold(
-      body: SafeArea(
-        child: Center(
-          child: ConstrainedBox(
-            constraints: const BoxConstraints(maxWidth: 720),
-            child: ListView(
-              padding: const EdgeInsets.fromLTRB(16, 24, 16, 32),
-              children: [
-                Text('B.Tech Admission Predictor',
-                    style: theme.textTheme.headlineSmall
-                        ?.copyWith(fontWeight: FontWeight.w700)),
-                const SizedBox(height: 6),
-                Text('Explore Exams  •  Compare Colleges  •  Predict Branches',
-                    style: theme.textTheme.bodyMedium
-                        ?.copyWith(color: theme.colorScheme.onSurfaceVariant)),
-                const SizedBox(height: 20),
-                reference.when(
-                  loading: () => const LinearProgressIndicator(minHeight: 2),
-                  error: (e, _) => _ConnectionError(message: '$e', onRetry: () {
-                    ref.invalidate(referenceDataProvider);
-                  }),
-                  data: (d) => _Stat(
-                    'Connected  ·  ${d.exams.length} exams  ·  '
-                    '${d.branches.length} branches  ·  ${d.states.length} states',
-                  ),
-                ),
-                const SizedBox(height: 20),
-                LayoutBuilder(
-                  builder: (context, c) => GridView.count(
-                    crossAxisCount: c.maxWidth > 560 ? 3 : 2,
-                    shrinkWrap: true,
-                    physics: const NeverScrollableScrollPhysics(),
-                    mainAxisSpacing: 12,
-                    crossAxisSpacing: 12,
-                    childAspectRatio: 1.25,
-                    children: [
-                      for (final t in _tiles) _TileCard(tile: t),
-                    ],
-                  ),
-                ),
-              ],
+      // The shell paints the canvas and owns the brand header, so this page
+      // starts at its own heading rather than repeating the product name.
+      body: ListView(
+        padding: const EdgeInsets.fromLTRB(24, 22, 24, 32),
+        children: [
+          const PageHeading(
+            icon: Icons.dashboard_rounded,
+            title: 'Dashboard',
+            subtitle: 'Explore Exams  •  Compare Colleges  •  Predict Branches',
+          ),
+          const SizedBox(height: 18),
+          reference.when(
+            loading: () => const LinearProgressIndicator(minHeight: 2),
+            error: (e, _) => _ConnectionError(message: '$e', onRetry: () {
+              ref.invalidate(referenceDataProvider);
+            }),
+            data: (d) => _Stat(
+              'Connected  ·  ${d.exams.length} exams  ·  '
+              '${d.branches.length} branches  ·  ${d.states.length} states',
             ),
           ),
-        ),
+          const SizedBox(height: 18),
+          // A desktop window is wide, so the grid grows columns instead of
+          // stretching four cards across a metre of screen.
+          LayoutBuilder(
+            builder: (context, c) {
+              final columns = switch (c.maxWidth) {
+                > 1180 => 5,
+                > 900 => 4,
+                > 620 => 3,
+                _ => 2,
+              };
+              return GridView.count(
+                crossAxisCount: columns,
+                shrinkWrap: true,
+                physics: const NeverScrollableScrollPhysics(),
+                mainAxisSpacing: 14,
+                crossAxisSpacing: 14,
+                // Wide and short. The card holds an icon and one line of text,
+                // and a taller box just puts empty space between them.
+                childAspectRatio: 3.1,
+                children: [
+                  for (final t in _tiles) _TileCard(tile: t),
+                ],
+              );
+            },
+          ),
+        ],
       ),
     );
   }
@@ -93,29 +99,46 @@ class _TileCard extends StatelessWidget {
         onTap: () => context.push(tile.route),
         child: Padding(
           padding: const EdgeInsets.all(14),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          child: Row(
             children: [
-              Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  Icon(tile.icon, size: 26, color: scheme.primary),
-                  if (!tile.ready)
-                    Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 2),
-                      decoration: BoxDecoration(
-                        color: scheme.surfaceContainerHighest,
-                        borderRadius: BorderRadius.circular(20),
-                      ),
-                      child: Text('soon',
-                          style: TextStyle(
-                              fontSize: 10.5, color: scheme.onSurfaceVariant)),
-                    ),
-                ],
+              Container(
+                padding: const EdgeInsets.all(9),
+                decoration: BoxDecoration(
+                  color: Brand.selected(Theme.of(context).brightness),
+                  borderRadius: BorderRadius.circular(10),
+                ),
+                child: Icon(
+                  tile.icon,
+                  size: 22,
+                  color: Theme.of(context).brightness == Brightness.light
+                      ? Brand.deep
+                      : Brand.light,
+                ),
               ),
-              Text(tile.label,
-                  style: const TextStyle(fontWeight: FontWeight.w600, height: 1.2)),
+              const SizedBox(width: 11),
+              Expanded(
+                child: Text(
+                  tile.label,
+                  maxLines: 2,
+                  overflow: TextOverflow.ellipsis,
+                  style: const TextStyle(
+                    fontWeight: FontWeight.w600,
+                    height: 1.2,
+                    fontSize: 13.5,
+                  ),
+                ),
+              ),
+              if (!tile.ready)
+                Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 2),
+                  decoration: BoxDecoration(
+                    color: scheme.surfaceContainerHighest,
+                    borderRadius: BorderRadius.circular(20),
+                  ),
+                  child: Text('soon',
+                      style: TextStyle(
+                          fontSize: 10.5, color: scheme.onSurfaceVariant)),
+                ),
             ],
           ),
         ),

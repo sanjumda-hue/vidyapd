@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 
+import '../../core/theme/app_theme.dart';
+
 /// Honest placeholder. Says what is missing rather than "coming soon!", so the
 /// screen is useful to whoever picks the feature up next.
 class ComingSoonScreen extends StatelessWidget {
@@ -21,9 +23,24 @@ class ComingSoonScreen extends StatelessWidget {
             child: Column(
               mainAxisSize: MainAxisSize.min,
               children: [
-                Icon(Icons.construction_rounded,
-                    size: 48, color: theme.colorScheme.outline),
-                const SizedBox(height: 16),
+                // Same circular chip as the predict screen's empty pane, so
+                // "nothing here yet" looks like one thing across the app.
+                Container(
+                  width: 116,
+                  height: 116,
+                  decoration: BoxDecoration(
+                    color: Brand.selected(theme.brightness),
+                    shape: BoxShape.circle,
+                  ),
+                  child: Icon(
+                    Icons.construction_rounded,
+                    size: 46,
+                    color: theme.brightness == Brightness.light
+                        ? Brand.deep
+                        : Brand.light,
+                  ),
+                ),
+                const SizedBox(height: 18),
                 Text('Not built yet',
                     style: theme.textTheme.titleMedium,
                     textAlign: TextAlign.center),

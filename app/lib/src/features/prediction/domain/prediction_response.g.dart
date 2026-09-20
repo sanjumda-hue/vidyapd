@@ -41,9 +41,11 @@ Map<String, dynamic> _$$BranchRefImplToJson(_$BranchRefImpl instance) =>
 _$CutoffYearImpl _$$CutoffYearImplFromJson(Map<String, dynamic> json) =>
     _$CutoffYearImpl(
       year: (json['year'] as num).toInt(),
-      opening: (json['opening'] as num?)?.toInt(),
-      closing: (json['closing'] as num).toInt(),
+      opening: json['opening'] as num?,
+      closing: json['closing'] as num,
       round: (json['round'] as num).toInt(),
+      max: json['max'] as num?,
+      pct: (json['pct'] as num?)?.toDouble(),
     );
 
 Map<String, dynamic> _$$CutoffYearImplToJson(_$CutoffYearImpl instance) =>
@@ -52,6 +54,28 @@ Map<String, dynamic> _$$CutoffYearImplToJson(_$CutoffYearImpl instance) =>
       'opening': instance.opening,
       'closing': instance.closing,
       'round': instance.round,
+      'max': instance.max,
+      'pct': instance.pct,
+    };
+
+_$ScoreBandImpl _$$ScoreBandImplFromJson(Map<String, dynamic> json) =>
+    _$ScoreBandImpl(
+      weightedClosing: json['weightedClosing'] as num?,
+      toughestClosing: json['toughestClosing'] as num?,
+      easiestClosing: json['easiestClosing'] as num?,
+      latestClosing: json['latestClosing'] as num?,
+      maxScore: json['maxScore'] as num?,
+      margin: json['margin'] as num?,
+    );
+
+Map<String, dynamic> _$$ScoreBandImplToJson(_$ScoreBandImpl instance) =>
+    <String, dynamic>{
+      'weightedClosing': instance.weightedClosing,
+      'toughestClosing': instance.toughestClosing,
+      'easiestClosing': instance.easiestClosing,
+      'latestClosing': instance.latestClosing,
+      'maxScore': instance.maxScore,
+      'margin': instance.margin,
     };
 
 _$PredictionMatchImpl _$$PredictionMatchImplFromJson(
@@ -72,6 +96,9 @@ _$PredictionMatchImpl _$$PredictionMatchImplFromJson(
   worstClosingRank: (json['worstClosingRank'] as num?)?.toInt(),
   latestClosingRank: (json['latestClosingRank'] as num?)?.toInt(),
   rankMargin: (json['rankMargin'] as num?)?.toInt(),
+  scoreBand: json['scoreBand'] == null
+      ? null
+      : ScoreBand.fromJson(json['scoreBand'] as Map<String, dynamic>),
   yearsAvailable: (json['yearsAvailable'] as num).toInt(),
   trend: json['trend'] as String,
   cutoffHistory:
@@ -99,6 +126,7 @@ Map<String, dynamic> _$$PredictionMatchImplToJson(
   'worstClosingRank': instance.worstClosingRank,
   'latestClosingRank': instance.latestClosingRank,
   'rankMargin': instance.rankMargin,
+  'scoreBand': instance.scoreBand,
   'yearsAvailable': instance.yearsAvailable,
   'trend': instance.trend,
   'cutoffHistory': instance.cutoffHistory,
@@ -116,9 +144,12 @@ _$PredictionResponseImpl _$$PredictionResponseImplFromJson(
   requestId: json['requestId'] as String,
   exam: ExamRef.fromJson(json['exam'] as Map<String, dynamic>),
   academicYear: (json['academicYear'] as num).toInt(),
-  rankUsed: (json['rankUsed'] as num).toInt(),
+  measure: json['measure'] as String? ?? 'rank',
+  rankUsed: (json['rankUsed'] as num?)?.toInt(),
   rankIsEstimated: json['rankIsEstimated'] as bool,
   rankEstimateMethod: json['rankEstimateMethod'] as String?,
+  scoreUsed: json['scoreUsed'] as num?,
+  maxScoreUsed: json['maxScoreUsed'] as num?,
   category: json['category'] as String,
   gender: json['gender'] as String,
   homeState: json['homeState'] as String?,
@@ -137,9 +168,12 @@ Map<String, dynamic> _$$PredictionResponseImplToJson(
   'requestId': instance.requestId,
   'exam': instance.exam,
   'academicYear': instance.academicYear,
+  'measure': instance.measure,
   'rankUsed': instance.rankUsed,
   'rankIsEstimated': instance.rankIsEstimated,
   'rankEstimateMethod': instance.rankEstimateMethod,
+  'scoreUsed': instance.scoreUsed,
+  'maxScoreUsed': instance.maxScoreUsed,
   'category': instance.category,
   'gender': instance.gender,
   'homeState': instance.homeState,

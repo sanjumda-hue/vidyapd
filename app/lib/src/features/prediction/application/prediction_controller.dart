@@ -55,3 +55,13 @@ class PredictionResultController
 
   void clear() => state = null;
 }
+
+/// Put the Predict screen back to a blank form with no results.
+///
+/// Exposed here rather than having callers invalidate the two providers
+/// themselves, so which providers make up "the form" stays inside this
+/// feature. The shell calls it on every rail tap.
+void resetPrediction(WidgetRef ref) {
+  ref.read(predictInputProvider.notifier).reset();
+  ref.read(predictionResultProvider.notifier).clear();
+}

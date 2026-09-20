@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../../../../core/theme/app_theme.dart';
+import '../../../shared/num_format.dart';
 import '../../domain/prediction_response.dart';
 
 const _gradeOrder = [
@@ -24,12 +25,12 @@ class ResultSummary extends StatelessWidget {
                 ?.copyWith(fontWeight: FontWeight.w700)),
         const SizedBox(height: 4),
         Text(
-          '${response.exam.name}  ·  rank ${response.rankUsed}  ·  '
+          '${response.exam.name}  ·  ${_measure(response)}  ·  '
           '${response.category}${response.homeState != null ? '  ·  ${response.homeState}' : ''}',
           style: theme.textTheme.bodySmall
               ?.copyWith(color: theme.colorScheme.onSurfaceVariant),
         ),
-        if (response.rankIsEstimated) ...[
+        if (response.rankIsEstimated && response.rankUsed != null) ...[
           const SizedBox(height: 8),
           // The student typed a percentile; this rank was derived. Saying so is
           // not optional -- see docs/04-prediction-engine.md.
@@ -85,3 +86,9 @@ class _CountChip extends StatelessWidget {
                 fontSize: 12.5, fontWeight: FontWeight.w600, color: color)),
       );
 }
+
+/// How the run is described in the summary line: "rank 45821", or "300/390"
+/// for an exam that admits on marks.
+String _measure(PredictionResponse r) => r.isScoreBased
+    ? '${outOf(r.scoreUsed!, r.maxScoreUsed)} marks'
+    : 'rank ${r.rankUsed}';

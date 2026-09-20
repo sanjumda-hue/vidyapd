@@ -31,15 +31,51 @@ class BranchRef with _$BranchRef {
 
 @freezed
 class CutoffYear with _$CutoffYear {
+  /// One published year for a programme.
+  ///
+  /// `closing` is a rank on most exams and a SCORE on marks-based ones, which
+  /// is why it is a num rather than an int -- and why [max] matters: BITSAT was
+  /// marked out of 450 until 2021 and 390 after, so 306 and 226 are the same
+  /// standard and the raw figures alone say the opposite.
   const factory CutoffYear({
     required int year,
-    int? opening,
-    required int closing,
+    num? opening,
+    required num closing,
     required int round,
+    num? max,
+    double? pct,
   }) = _CutoffYear;
+
+  const CutoffYear._();
+
+  /// True when this row is a score out of [max] rather than a rank.
+  bool get isScore => max != null;
 
   factory CutoffYear.fromJson(Map<String, dynamic> json) =>
       _$CutoffYearFromJson(json);
+}
+
+/// Cut-off figures for a marks-based programme, out of the candidate's own
+/// paper total. Null on a rank-based exam, where the rank fields carry it.
+@freezed
+class ScoreBand with _$ScoreBand {
+  const factory ScoreBand({
+    num? weightedClosing,
+
+    /// Strictest year on record: the HIGHEST cut-off.
+    num? toughestClosing,
+
+    /// Most lenient year: the LOWEST cut-off.
+    num? easiestClosing,
+    num? latestClosing,
+    num? maxScore,
+
+    /// Candidate score minus the weighted cut-off. Positive = ahead of it.
+    num? margin,
+  }) = _ScoreBand;
+
+  factory ScoreBand.fromJson(Map<String, dynamic> json) =>
+      _$ScoreBandFromJson(json);
 }
 
 @freezed
@@ -60,6 +96,9 @@ class PredictionMatch with _$PredictionMatch {
     int? worstClosingRank,
     int? latestClosingRank,
     int? rankMargin,
+
+    /// Set instead of the rank fields when the exam is marks-based.
+    ScoreBand? scoreBand,
     required int yearsAvailable,
     required String trend,
     @Default(<CutoffYear>[]) List<CutoffYear> cutoffHistory,
@@ -85,9 +124,19 @@ class PredictionResponse with _$PredictionResponse {
     required String requestId,
     required ExamRef exam,
     required int academicYear,
-    required int rankUsed,
+
+    /// 'rank' or 'score'. Says which set of fields on each match to read, and
+    /// which way "better" points -- a lower rank is better, a higher score is.
+    @Default('rank') String measure,
+
+    /// Null on a marks-based exam.
+    int? rankUsed,
     required bool rankIsEstimated,
     String? rankEstimateMethod,
+
+    /// Both null unless the exam is marks-based.
+    num? scoreUsed,
+    num? maxScoreUsed,
     required String category,
     required String gender,
     String? homeState,
@@ -96,6 +145,10 @@ class PredictionResponse with _$PredictionResponse {
     /// Shown verbatim under every result list. Never dropped, never reworded.
     required String disclaimer,
   }) = _PredictionResponse;
+
+  const PredictionResponse._();
+
+  bool get isScoreBased => measure == 'score';
 
   factory PredictionResponse.fromJson(Map<String, dynamic> json) =>
       _$PredictionResponseFromJson(json);

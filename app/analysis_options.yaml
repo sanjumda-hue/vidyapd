@@ -1,1 +1,8 @@
 include: package:flutter_lints/flutter.yaml
+
+analyzer:
+  errors:
+    # freezed puts @JsonKey on constructor parameters and the analyzer objects,
+    # even though json_serializable reads it correctly from there. This is the
+    # suppression both packages document.
+    invalid_annotation_target: ignore

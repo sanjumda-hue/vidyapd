@@ -452,9 +452,11 @@ CutoffYear _$CutoffYearFromJson(Map<String, dynamic> json) {
 /// @nodoc
 mixin _$CutoffYear {
   int get year => throw _privateConstructorUsedError;
-  int? get opening => throw _privateConstructorUsedError;
-  int get closing => throw _privateConstructorUsedError;
+  num? get opening => throw _privateConstructorUsedError;
+  num get closing => throw _privateConstructorUsedError;
   int get round => throw _privateConstructorUsedError;
+  num? get max => throw _privateConstructorUsedError;
+  double? get pct => throw _privateConstructorUsedError;
 
   /// Serializes this CutoffYear to a JSON map.
   Map<String, dynamic> toJson() => throw _privateConstructorUsedError;
@@ -473,7 +475,14 @@ abstract class $CutoffYearCopyWith<$Res> {
     $Res Function(CutoffYear) then,
   ) = _$CutoffYearCopyWithImpl<$Res, CutoffYear>;
   @useResult
-  $Res call({int year, int? opening, int closing, int round});
+  $Res call({
+    int year,
+    num? opening,
+    num closing,
+    int round,
+    num? max,
+    double? pct,
+  });
 }
 
 /// @nodoc
@@ -495,6 +504,8 @@ class _$CutoffYearCopyWithImpl<$Res, $Val extends CutoffYear>
     Object? opening = freezed,
     Object? closing = null,
     Object? round = null,
+    Object? max = freezed,
+    Object? pct = freezed,
   }) {
     return _then(
       _value.copyWith(
@@ -505,15 +516,23 @@ class _$CutoffYearCopyWithImpl<$Res, $Val extends CutoffYear>
             opening: freezed == opening
                 ? _value.opening
                 : opening // ignore: cast_nullable_to_non_nullable
-                      as int?,
+                      as num?,
             closing: null == closing
                 ? _value.closing
                 : closing // ignore: cast_nullable_to_non_nullable
-                      as int,
+                      as num,
             round: null == round
                 ? _value.round
                 : round // ignore: cast_nullable_to_non_nullable
                       as int,
+            max: freezed == max
+                ? _value.max
+                : max // ignore: cast_nullable_to_non_nullable
+                      as num?,
+            pct: freezed == pct
+                ? _value.pct
+                : pct // ignore: cast_nullable_to_non_nullable
+                      as double?,
           )
           as $Val,
     );
@@ -529,7 +548,14 @@ abstract class _$$CutoffYearImplCopyWith<$Res>
   ) = __$$CutoffYearImplCopyWithImpl<$Res>;
   @override
   @useResult
-  $Res call({int year, int? opening, int closing, int round});
+  $Res call({
+    int year,
+    num? opening,
+    num closing,
+    int round,
+    num? max,
+    double? pct,
+  });
 }
 
 /// @nodoc
@@ -550,6 +576,8 @@ class __$$CutoffYearImplCopyWithImpl<$Res>
     Object? opening = freezed,
     Object? closing = null,
     Object? round = null,
+    Object? max = freezed,
+    Object? pct = freezed,
   }) {
     return _then(
       _$CutoffYearImpl(
@@ -560,15 +588,23 @@ class __$$CutoffYearImplCopyWithImpl<$Res>
         opening: freezed == opening
             ? _value.opening
             : opening // ignore: cast_nullable_to_non_nullable
-                  as int?,
+                  as num?,
         closing: null == closing
             ? _value.closing
             : closing // ignore: cast_nullable_to_non_nullable
-                  as int,
+                  as num,
         round: null == round
             ? _value.round
             : round // ignore: cast_nullable_to_non_nullable
                   as int,
+        max: freezed == max
+            ? _value.max
+            : max // ignore: cast_nullable_to_non_nullable
+                  as num?,
+        pct: freezed == pct
+            ? _value.pct
+            : pct // ignore: cast_nullable_to_non_nullable
+                  as double?,
       ),
     );
   }
@@ -576,13 +612,15 @@ class __$$CutoffYearImplCopyWithImpl<$Res>
 
 /// @nodoc
 @JsonSerializable()
-class _$CutoffYearImpl implements _CutoffYear {
+class _$CutoffYearImpl extends _CutoffYear {
   const _$CutoffYearImpl({
     required this.year,
     this.opening,
     required this.closing,
     required this.round,
-  });
+    this.max,
+    this.pct,
+  }) : super._();
 
   factory _$CutoffYearImpl.fromJson(Map<String, dynamic> json) =>
       _$$CutoffYearImplFromJson(json);
@@ -590,15 +628,19 @@ class _$CutoffYearImpl implements _CutoffYear {
   @override
   final int year;
   @override
-  final int? opening;
+  final num? opening;
   @override
-  final int closing;
+  final num closing;
   @override
   final int round;
+  @override
+  final num? max;
+  @override
+  final double? pct;
 
   @override
   String toString() {
-    return 'CutoffYear(year: $year, opening: $opening, closing: $closing, round: $round)';
+    return 'CutoffYear(year: $year, opening: $opening, closing: $closing, round: $round, max: $max, pct: $pct)';
   }
 
   @override
@@ -609,12 +651,15 @@ class _$CutoffYearImpl implements _CutoffYear {
             (identical(other.year, year) || other.year == year) &&
             (identical(other.opening, opening) || other.opening == opening) &&
             (identical(other.closing, closing) || other.closing == closing) &&
-            (identical(other.round, round) || other.round == round));
+            (identical(other.round, round) || other.round == round) &&
+            (identical(other.max, max) || other.max == max) &&
+            (identical(other.pct, pct) || other.pct == pct));
   }
 
   @JsonKey(includeFromJson: false, includeToJson: false)
   @override
-  int get hashCode => Object.hash(runtimeType, year, opening, closing, round);
+  int get hashCode =>
+      Object.hash(runtimeType, year, opening, closing, round, max, pct);
 
   /// Create a copy of CutoffYear
   /// with the given fields replaced by the non-null parameter values.
@@ -630,13 +675,16 @@ class _$CutoffYearImpl implements _CutoffYear {
   }
 }
 
-abstract class _CutoffYear implements CutoffYear {
+abstract class _CutoffYear extends CutoffYear {
   const factory _CutoffYear({
     required final int year,
-    final int? opening,
-    required final int closing,
+    final num? opening,
+    required final num closing,
     required final int round,
+    final num? max,
+    final double? pct,
   }) = _$CutoffYearImpl;
+  const _CutoffYear._() : super._();
 
   factory _CutoffYear.fromJson(Map<String, dynamic> json) =
       _$CutoffYearImpl.fromJson;
@@ -644,17 +692,313 @@ abstract class _CutoffYear implements CutoffYear {
   @override
   int get year;
   @override
-  int? get opening;
+  num? get opening;
   @override
-  int get closing;
+  num get closing;
   @override
   int get round;
+  @override
+  num? get max;
+  @override
+  double? get pct;
 
   /// Create a copy of CutoffYear
   /// with the given fields replaced by the non-null parameter values.
   @override
   @JsonKey(includeFromJson: false, includeToJson: false)
   _$$CutoffYearImplCopyWith<_$CutoffYearImpl> get copyWith =>
+      throw _privateConstructorUsedError;
+}
+
+ScoreBand _$ScoreBandFromJson(Map<String, dynamic> json) {
+  return _ScoreBand.fromJson(json);
+}
+
+/// @nodoc
+mixin _$ScoreBand {
+  num? get weightedClosing => throw _privateConstructorUsedError;
+
+  /// Strictest year on record: the HIGHEST cut-off.
+  num? get toughestClosing => throw _privateConstructorUsedError;
+
+  /// Most lenient year: the LOWEST cut-off.
+  num? get easiestClosing => throw _privateConstructorUsedError;
+  num? get latestClosing => throw _privateConstructorUsedError;
+  num? get maxScore => throw _privateConstructorUsedError;
+
+  /// Candidate score minus the weighted cut-off. Positive = ahead of it.
+  num? get margin => throw _privateConstructorUsedError;
+
+  /// Serializes this ScoreBand to a JSON map.
+  Map<String, dynamic> toJson() => throw _privateConstructorUsedError;
+
+  /// Create a copy of ScoreBand
+  /// with the given fields replaced by the non-null parameter values.
+  @JsonKey(includeFromJson: false, includeToJson: false)
+  $ScoreBandCopyWith<ScoreBand> get copyWith =>
+      throw _privateConstructorUsedError;
+}
+
+/// @nodoc
+abstract class $ScoreBandCopyWith<$Res> {
+  factory $ScoreBandCopyWith(ScoreBand value, $Res Function(ScoreBand) then) =
+      _$ScoreBandCopyWithImpl<$Res, ScoreBand>;
+  @useResult
+  $Res call({
+    num? weightedClosing,
+    num? toughestClosing,
+    num? easiestClosing,
+    num? latestClosing,
+    num? maxScore,
+    num? margin,
+  });
+}
+
+/// @nodoc
+class _$ScoreBandCopyWithImpl<$Res, $Val extends ScoreBand>
+    implements $ScoreBandCopyWith<$Res> {
+  _$ScoreBandCopyWithImpl(this._value, this._then);
+
+  // ignore: unused_field
+  final $Val _value;
+  // ignore: unused_field
+  final $Res Function($Val) _then;
+
+  /// Create a copy of ScoreBand
+  /// with the given fields replaced by the non-null parameter values.
+  @pragma('vm:prefer-inline')
+  @override
+  $Res call({
+    Object? weightedClosing = freezed,
+    Object? toughestClosing = freezed,
+    Object? easiestClosing = freezed,
+    Object? latestClosing = freezed,
+    Object? maxScore = freezed,
+    Object? margin = freezed,
+  }) {
+    return _then(
+      _value.copyWith(
+            weightedClosing: freezed == weightedClosing
+                ? _value.weightedClosing
+                : weightedClosing // ignore: cast_nullable_to_non_nullable
+                      as num?,
+            toughestClosing: freezed == toughestClosing
+                ? _value.toughestClosing
+                : toughestClosing // ignore: cast_nullable_to_non_nullable
+                      as num?,
+            easiestClosing: freezed == easiestClosing
+                ? _value.easiestClosing
+                : easiestClosing // ignore: cast_nullable_to_non_nullable
+                      as num?,
+            latestClosing: freezed == latestClosing
+                ? _value.latestClosing
+                : latestClosing // ignore: cast_nullable_to_non_nullable
+                      as num?,
+            maxScore: freezed == maxScore
+                ? _value.maxScore
+                : maxScore // ignore: cast_nullable_to_non_nullable
+                      as num?,
+            margin: freezed == margin
+                ? _value.margin
+                : margin // ignore: cast_nullable_to_non_nullable
+                      as num?,
+          )
+          as $Val,
+    );
+  }
+}
+
+/// @nodoc
+abstract class _$$ScoreBandImplCopyWith<$Res>
+    implements $ScoreBandCopyWith<$Res> {
+  factory _$$ScoreBandImplCopyWith(
+    _$ScoreBandImpl value,
+    $Res Function(_$ScoreBandImpl) then,
+  ) = __$$ScoreBandImplCopyWithImpl<$Res>;
+  @override
+  @useResult
+  $Res call({
+    num? weightedClosing,
+    num? toughestClosing,
+    num? easiestClosing,
+    num? latestClosing,
+    num? maxScore,
+    num? margin,
+  });
+}
+
+/// @nodoc
+class __$$ScoreBandImplCopyWithImpl<$Res>
+    extends _$ScoreBandCopyWithImpl<$Res, _$ScoreBandImpl>
+    implements _$$ScoreBandImplCopyWith<$Res> {
+  __$$ScoreBandImplCopyWithImpl(
+    _$ScoreBandImpl _value,
+    $Res Function(_$ScoreBandImpl) _then,
+  ) : super(_value, _then);
+
+  /// Create a copy of ScoreBand
+  /// with the given fields replaced by the non-null parameter values.
+  @pragma('vm:prefer-inline')
+  @override
+  $Res call({
+    Object? weightedClosing = freezed,
+    Object? toughestClosing = freezed,
+    Object? easiestClosing = freezed,
+    Object? latestClosing = freezed,
+    Object? maxScore = freezed,
+    Object? margin = freezed,
+  }) {
+    return _then(
+      _$ScoreBandImpl(
+        weightedClosing: freezed == weightedClosing
+            ? _value.weightedClosing
+            : weightedClosing // ignore: cast_nullable_to_non_nullable
+                  as num?,
+        toughestClosing: freezed == toughestClosing
+            ? _value.toughestClosing
+            : toughestClosing // ignore: cast_nullable_to_non_nullable
+                  as num?,
+        easiestClosing: freezed == easiestClosing
+            ? _value.easiestClosing
+            : easiestClosing // ignore: cast_nullable_to_non_nullable
+                  as num?,
+        latestClosing: freezed == latestClosing
+            ? _value.latestClosing
+            : latestClosing // ignore: cast_nullable_to_non_nullable
+                  as num?,
+        maxScore: freezed == maxScore
+            ? _value.maxScore
+            : maxScore // ignore: cast_nullable_to_non_nullable
+                  as num?,
+        margin: freezed == margin
+            ? _value.margin
+            : margin // ignore: cast_nullable_to_non_nullable
+                  as num?,
+      ),
+    );
+  }
+}
+
+/// @nodoc
+@JsonSerializable()
+class _$ScoreBandImpl implements _ScoreBand {
+  const _$ScoreBandImpl({
+    this.weightedClosing,
+    this.toughestClosing,
+    this.easiestClosing,
+    this.latestClosing,
+    this.maxScore,
+    this.margin,
+  });
+
+  factory _$ScoreBandImpl.fromJson(Map<String, dynamic> json) =>
+      _$$ScoreBandImplFromJson(json);
+
+  @override
+  final num? weightedClosing;
+
+  /// Strictest year on record: the HIGHEST cut-off.
+  @override
+  final num? toughestClosing;
+
+  /// Most lenient year: the LOWEST cut-off.
+  @override
+  final num? easiestClosing;
+  @override
+  final num? latestClosing;
+  @override
+  final num? maxScore;
+
+  /// Candidate score minus the weighted cut-off. Positive = ahead of it.
+  @override
+  final num? margin;
+
+  @override
+  String toString() {
+    return 'ScoreBand(weightedClosing: $weightedClosing, toughestClosing: $toughestClosing, easiestClosing: $easiestClosing, latestClosing: $latestClosing, maxScore: $maxScore, margin: $margin)';
+  }
+
+  @override
+  bool operator ==(Object other) {
+    return identical(this, other) ||
+        (other.runtimeType == runtimeType &&
+            other is _$ScoreBandImpl &&
+            (identical(other.weightedClosing, weightedClosing) ||
+                other.weightedClosing == weightedClosing) &&
+            (identical(other.toughestClosing, toughestClosing) ||
+                other.toughestClosing == toughestClosing) &&
+            (identical(other.easiestClosing, easiestClosing) ||
+                other.easiestClosing == easiestClosing) &&
+            (identical(other.latestClosing, latestClosing) ||
+                other.latestClosing == latestClosing) &&
+            (identical(other.maxScore, maxScore) ||
+                other.maxScore == maxScore) &&
+            (identical(other.margin, margin) || other.margin == margin));
+  }
+
+  @JsonKey(includeFromJson: false, includeToJson: false)
+  @override
+  int get hashCode => Object.hash(
+    runtimeType,
+    weightedClosing,
+    toughestClosing,
+    easiestClosing,
+    latestClosing,
+    maxScore,
+    margin,
+  );
+
+  /// Create a copy of ScoreBand
+  /// with the given fields replaced by the non-null parameter values.
+  @JsonKey(includeFromJson: false, includeToJson: false)
+  @override
+  @pragma('vm:prefer-inline')
+  _$$ScoreBandImplCopyWith<_$ScoreBandImpl> get copyWith =>
+      __$$ScoreBandImplCopyWithImpl<_$ScoreBandImpl>(this, _$identity);
+
+  @override
+  Map<String, dynamic> toJson() {
+    return _$$ScoreBandImplToJson(this);
+  }
+}
+
+abstract class _ScoreBand implements ScoreBand {
+  const factory _ScoreBand({
+    final num? weightedClosing,
+    final num? toughestClosing,
+    final num? easiestClosing,
+    final num? latestClosing,
+    final num? maxScore,
+    final num? margin,
+  }) = _$ScoreBandImpl;
+
+  factory _ScoreBand.fromJson(Map<String, dynamic> json) =
+      _$ScoreBandImpl.fromJson;
+
+  @override
+  num? get weightedClosing;
+
+  /// Strictest year on record: the HIGHEST cut-off.
+  @override
+  num? get toughestClosing;
+
+  /// Most lenient year: the LOWEST cut-off.
+  @override
+  num? get easiestClosing;
+  @override
+  num? get latestClosing;
+  @override
+  num? get maxScore;
+
+  /// Candidate score minus the weighted cut-off. Positive = ahead of it.
+  @override
+  num? get margin;
+
+  /// Create a copy of ScoreBand
+  /// with the given fields replaced by the non-null parameter values.
+  @override
+  @JsonKey(includeFromJson: false, includeToJson: false)
+  _$$ScoreBandImplCopyWith<_$ScoreBandImpl> get copyWith =>
       throw _privateConstructorUsedError;
 }
 
@@ -679,6 +1023,9 @@ mixin _$PredictionMatch {
   int? get worstClosingRank => throw _privateConstructorUsedError;
   int? get latestClosingRank => throw _privateConstructorUsedError;
   int? get rankMargin => throw _privateConstructorUsedError;
+
+  /// Set instead of the rank fields when the exam is marks-based.
+  ScoreBand? get scoreBand => throw _privateConstructorUsedError;
   int get yearsAvailable => throw _privateConstructorUsedError;
   String get trend => throw _privateConstructorUsedError;
   List<CutoffYear> get cutoffHistory => throw _privateConstructorUsedError;
@@ -716,6 +1063,7 @@ abstract class $PredictionMatchCopyWith<$Res> {
     int? worstClosingRank,
     int? latestClosingRank,
     int? rankMargin,
+    ScoreBand? scoreBand,
     int yearsAvailable,
     String trend,
     List<CutoffYear> cutoffHistory,
@@ -723,6 +1071,7 @@ abstract class $PredictionMatchCopyWith<$Res> {
 
   $CollegeRefCopyWith<$Res> get college;
   $BranchRefCopyWith<$Res> get branch;
+  $ScoreBandCopyWith<$Res>? get scoreBand;
 }
 
 /// @nodoc
@@ -755,6 +1104,7 @@ class _$PredictionMatchCopyWithImpl<$Res, $Val extends PredictionMatch>
     Object? worstClosingRank = freezed,
     Object? latestClosingRank = freezed,
     Object? rankMargin = freezed,
+    Object? scoreBand = freezed,
     Object? yearsAvailable = null,
     Object? trend = null,
     Object? cutoffHistory = null,
@@ -821,6 +1171,10 @@ class _$PredictionMatchCopyWithImpl<$Res, $Val extends PredictionMatch>
                 ? _value.rankMargin
                 : rankMargin // ignore: cast_nullable_to_non_nullable
                       as int?,
+            scoreBand: freezed == scoreBand
+                ? _value.scoreBand
+                : scoreBand // ignore: cast_nullable_to_non_nullable
+                      as ScoreBand?,
             yearsAvailable: null == yearsAvailable
                 ? _value.yearsAvailable
                 : yearsAvailable // ignore: cast_nullable_to_non_nullable
@@ -857,6 +1211,20 @@ class _$PredictionMatchCopyWithImpl<$Res, $Val extends PredictionMatch>
       return _then(_value.copyWith(branch: value) as $Val);
     });
   }
+
+  /// Create a copy of PredictionMatch
+  /// with the given fields replaced by the non-null parameter values.
+  @override
+  @pragma('vm:prefer-inline')
+  $ScoreBandCopyWith<$Res>? get scoreBand {
+    if (_value.scoreBand == null) {
+      return null;
+    }
+
+    return $ScoreBandCopyWith<$Res>(_value.scoreBand!, (value) {
+      return _then(_value.copyWith(scoreBand: value) as $Val);
+    });
+  }
 }
 
 /// @nodoc
@@ -884,6 +1252,7 @@ abstract class _$$PredictionMatchImplCopyWith<$Res>
     int? worstClosingRank,
     int? latestClosingRank,
     int? rankMargin,
+    ScoreBand? scoreBand,
     int yearsAvailable,
     String trend,
     List<CutoffYear> cutoffHistory,
@@ -893,6 +1262,8 @@ abstract class _$$PredictionMatchImplCopyWith<$Res>
   $CollegeRefCopyWith<$Res> get college;
   @override
   $BranchRefCopyWith<$Res> get branch;
+  @override
+  $ScoreBandCopyWith<$Res>? get scoreBand;
 }
 
 /// @nodoc
@@ -924,6 +1295,7 @@ class __$$PredictionMatchImplCopyWithImpl<$Res>
     Object? worstClosingRank = freezed,
     Object? latestClosingRank = freezed,
     Object? rankMargin = freezed,
+    Object? scoreBand = freezed,
     Object? yearsAvailable = null,
     Object? trend = null,
     Object? cutoffHistory = null,
@@ -990,6 +1362,10 @@ class __$$PredictionMatchImplCopyWithImpl<$Res>
             ? _value.rankMargin
             : rankMargin // ignore: cast_nullable_to_non_nullable
                   as int?,
+        scoreBand: freezed == scoreBand
+            ? _value.scoreBand
+            : scoreBand // ignore: cast_nullable_to_non_nullable
+                  as ScoreBand?,
         yearsAvailable: null == yearsAvailable
             ? _value.yearsAvailable
             : yearsAvailable // ignore: cast_nullable_to_non_nullable
@@ -1026,6 +1402,7 @@ class _$PredictionMatchImpl implements _PredictionMatch {
     this.worstClosingRank,
     this.latestClosingRank,
     this.rankMargin,
+    this.scoreBand,
     required this.yearsAvailable,
     required this.trend,
     final List<CutoffYear> cutoffHistory = const <CutoffYear>[],
@@ -1064,6 +1441,10 @@ class _$PredictionMatchImpl implements _PredictionMatch {
   final int? latestClosingRank;
   @override
   final int? rankMargin;
+
+  /// Set instead of the rank fields when the exam is marks-based.
+  @override
+  final ScoreBand? scoreBand;
   @override
   final int yearsAvailable;
   @override
@@ -1079,7 +1460,7 @@ class _$PredictionMatchImpl implements _PredictionMatch {
 
   @override
   String toString() {
-    return 'PredictionMatch(collegeBranchId: $collegeBranchId, college: $college, branch: $branch, programName: $programName, seatType: $seatType, quota: $quota, genderPool: $genderPool, grade: $grade, gradeLabel: $gradeLabel, score: $score, weightedClosingRank: $weightedClosingRank, bestClosingRank: $bestClosingRank, worstClosingRank: $worstClosingRank, latestClosingRank: $latestClosingRank, rankMargin: $rankMargin, yearsAvailable: $yearsAvailable, trend: $trend, cutoffHistory: $cutoffHistory)';
+    return 'PredictionMatch(collegeBranchId: $collegeBranchId, college: $college, branch: $branch, programName: $programName, seatType: $seatType, quota: $quota, genderPool: $genderPool, grade: $grade, gradeLabel: $gradeLabel, score: $score, weightedClosingRank: $weightedClosingRank, bestClosingRank: $bestClosingRank, worstClosingRank: $worstClosingRank, latestClosingRank: $latestClosingRank, rankMargin: $rankMargin, scoreBand: $scoreBand, yearsAvailable: $yearsAvailable, trend: $trend, cutoffHistory: $cutoffHistory)';
   }
 
   @override
@@ -1112,6 +1493,8 @@ class _$PredictionMatchImpl implements _PredictionMatch {
                 other.latestClosingRank == latestClosingRank) &&
             (identical(other.rankMargin, rankMargin) ||
                 other.rankMargin == rankMargin) &&
+            (identical(other.scoreBand, scoreBand) ||
+                other.scoreBand == scoreBand) &&
             (identical(other.yearsAvailable, yearsAvailable) ||
                 other.yearsAvailable == yearsAvailable) &&
             (identical(other.trend, trend) || other.trend == trend) &&
@@ -1123,7 +1506,7 @@ class _$PredictionMatchImpl implements _PredictionMatch {
 
   @JsonKey(includeFromJson: false, includeToJson: false)
   @override
-  int get hashCode => Object.hash(
+  int get hashCode => Object.hashAll([
     runtimeType,
     collegeBranchId,
     college,
@@ -1140,10 +1523,11 @@ class _$PredictionMatchImpl implements _PredictionMatch {
     worstClosingRank,
     latestClosingRank,
     rankMargin,
+    scoreBand,
     yearsAvailable,
     trend,
     const DeepCollectionEquality().hash(_cutoffHistory),
-  );
+  ]);
 
   /// Create a copy of PredictionMatch
   /// with the given fields replaced by the non-null parameter values.
@@ -1179,6 +1563,7 @@ abstract class _PredictionMatch implements PredictionMatch {
     final int? worstClosingRank,
     final int? latestClosingRank,
     final int? rankMargin,
+    final ScoreBand? scoreBand,
     required final int yearsAvailable,
     required final String trend,
     final List<CutoffYear> cutoffHistory,
@@ -1217,6 +1602,10 @@ abstract class _PredictionMatch implements PredictionMatch {
   int? get latestClosingRank;
   @override
   int? get rankMargin;
+
+  /// Set instead of the rank fields when the exam is marks-based.
+  @override
+  ScoreBand? get scoreBand;
   @override
   int get yearsAvailable;
   @override
@@ -1404,9 +1793,19 @@ mixin _$PredictionResponse {
   String get requestId => throw _privateConstructorUsedError;
   ExamRef get exam => throw _privateConstructorUsedError;
   int get academicYear => throw _privateConstructorUsedError;
-  int get rankUsed => throw _privateConstructorUsedError;
+
+  /// 'rank' or 'score'. Says which set of fields on each match to read, and
+  /// which way "better" points -- a lower rank is better, a higher score is.
+  String get measure => throw _privateConstructorUsedError;
+
+  /// Null on a marks-based exam.
+  int? get rankUsed => throw _privateConstructorUsedError;
   bool get rankIsEstimated => throw _privateConstructorUsedError;
   String? get rankEstimateMethod => throw _privateConstructorUsedError;
+
+  /// Both null unless the exam is marks-based.
+  num? get scoreUsed => throw _privateConstructorUsedError;
+  num? get maxScoreUsed => throw _privateConstructorUsedError;
   String get category => throw _privateConstructorUsedError;
   String get gender => throw _privateConstructorUsedError;
   String? get homeState => throw _privateConstructorUsedError;
@@ -1437,9 +1836,12 @@ abstract class $PredictionResponseCopyWith<$Res> {
     String requestId,
     ExamRef exam,
     int academicYear,
-    int rankUsed,
+    String measure,
+    int? rankUsed,
     bool rankIsEstimated,
     String? rankEstimateMethod,
+    num? scoreUsed,
+    num? maxScoreUsed,
     String category,
     String gender,
     String? homeState,
@@ -1469,9 +1871,12 @@ class _$PredictionResponseCopyWithImpl<$Res, $Val extends PredictionResponse>
     Object? requestId = null,
     Object? exam = null,
     Object? academicYear = null,
-    Object? rankUsed = null,
+    Object? measure = null,
+    Object? rankUsed = freezed,
     Object? rankIsEstimated = null,
     Object? rankEstimateMethod = freezed,
+    Object? scoreUsed = freezed,
+    Object? maxScoreUsed = freezed,
     Object? category = null,
     Object? gender = null,
     Object? homeState = freezed,
@@ -1493,10 +1898,14 @@ class _$PredictionResponseCopyWithImpl<$Res, $Val extends PredictionResponse>
                 ? _value.academicYear
                 : academicYear // ignore: cast_nullable_to_non_nullable
                       as int,
-            rankUsed: null == rankUsed
+            measure: null == measure
+                ? _value.measure
+                : measure // ignore: cast_nullable_to_non_nullable
+                      as String,
+            rankUsed: freezed == rankUsed
                 ? _value.rankUsed
                 : rankUsed // ignore: cast_nullable_to_non_nullable
-                      as int,
+                      as int?,
             rankIsEstimated: null == rankIsEstimated
                 ? _value.rankIsEstimated
                 : rankIsEstimated // ignore: cast_nullable_to_non_nullable
@@ -1505,6 +1914,14 @@ class _$PredictionResponseCopyWithImpl<$Res, $Val extends PredictionResponse>
                 ? _value.rankEstimateMethod
                 : rankEstimateMethod // ignore: cast_nullable_to_non_nullable
                       as String?,
+            scoreUsed: freezed == scoreUsed
+                ? _value.scoreUsed
+                : scoreUsed // ignore: cast_nullable_to_non_nullable
+                      as num?,
+            maxScoreUsed: freezed == maxScoreUsed
+                ? _value.maxScoreUsed
+                : maxScoreUsed // ignore: cast_nullable_to_non_nullable
+                      as num?,
             category: null == category
                 ? _value.category
                 : category // ignore: cast_nullable_to_non_nullable
@@ -1558,9 +1975,12 @@ abstract class _$$PredictionResponseImplCopyWith<$Res>
     String requestId,
     ExamRef exam,
     int academicYear,
-    int rankUsed,
+    String measure,
+    int? rankUsed,
     bool rankIsEstimated,
     String? rankEstimateMethod,
+    num? scoreUsed,
+    num? maxScoreUsed,
     String category,
     String gender,
     String? homeState,
@@ -1590,9 +2010,12 @@ class __$$PredictionResponseImplCopyWithImpl<$Res>
     Object? requestId = null,
     Object? exam = null,
     Object? academicYear = null,
-    Object? rankUsed = null,
+    Object? measure = null,
+    Object? rankUsed = freezed,
     Object? rankIsEstimated = null,
     Object? rankEstimateMethod = freezed,
+    Object? scoreUsed = freezed,
+    Object? maxScoreUsed = freezed,
     Object? category = null,
     Object? gender = null,
     Object? homeState = freezed,
@@ -1614,10 +2037,14 @@ class __$$PredictionResponseImplCopyWithImpl<$Res>
             ? _value.academicYear
             : academicYear // ignore: cast_nullable_to_non_nullable
                   as int,
-        rankUsed: null == rankUsed
+        measure: null == measure
+            ? _value.measure
+            : measure // ignore: cast_nullable_to_non_nullable
+                  as String,
+        rankUsed: freezed == rankUsed
             ? _value.rankUsed
             : rankUsed // ignore: cast_nullable_to_non_nullable
-                  as int,
+                  as int?,
         rankIsEstimated: null == rankIsEstimated
             ? _value.rankIsEstimated
             : rankIsEstimated // ignore: cast_nullable_to_non_nullable
@@ -1626,6 +2053,14 @@ class __$$PredictionResponseImplCopyWithImpl<$Res>
             ? _value.rankEstimateMethod
             : rankEstimateMethod // ignore: cast_nullable_to_non_nullable
                   as String?,
+        scoreUsed: freezed == scoreUsed
+            ? _value.scoreUsed
+            : scoreUsed // ignore: cast_nullable_to_non_nullable
+                  as num?,
+        maxScoreUsed: freezed == maxScoreUsed
+            ? _value.maxScoreUsed
+            : maxScoreUsed // ignore: cast_nullable_to_non_nullable
+                  as num?,
         category: null == category
             ? _value.category
             : category // ignore: cast_nullable_to_non_nullable
@@ -1657,14 +2092,17 @@ class __$$PredictionResponseImplCopyWithImpl<$Res>
 
 /// @nodoc
 @JsonSerializable()
-class _$PredictionResponseImpl implements _PredictionResponse {
+class _$PredictionResponseImpl extends _PredictionResponse {
   const _$PredictionResponseImpl({
     required this.requestId,
     required this.exam,
     required this.academicYear,
-    required this.rankUsed,
+    this.measure = 'rank',
+    this.rankUsed,
     required this.rankIsEstimated,
     this.rankEstimateMethod,
+    this.scoreUsed,
+    this.maxScoreUsed,
     required this.category,
     required this.gender,
     this.homeState,
@@ -1672,7 +2110,8 @@ class _$PredictionResponseImpl implements _PredictionResponse {
     final List<PredictionMatch> matches = const <PredictionMatch>[],
     required this.disclaimer,
   }) : _counts = counts,
-       _matches = matches;
+       _matches = matches,
+       super._();
 
   factory _$PredictionResponseImpl.fromJson(Map<String, dynamic> json) =>
       _$$PredictionResponseImplFromJson(json);
@@ -1683,12 +2122,26 @@ class _$PredictionResponseImpl implements _PredictionResponse {
   final ExamRef exam;
   @override
   final int academicYear;
+
+  /// 'rank' or 'score'. Says which set of fields on each match to read, and
+  /// which way "better" points -- a lower rank is better, a higher score is.
   @override
-  final int rankUsed;
+  @JsonKey()
+  final String measure;
+
+  /// Null on a marks-based exam.
+  @override
+  final int? rankUsed;
   @override
   final bool rankIsEstimated;
   @override
   final String? rankEstimateMethod;
+
+  /// Both null unless the exam is marks-based.
+  @override
+  final num? scoreUsed;
+  @override
+  final num? maxScoreUsed;
   @override
   final String category;
   @override
@@ -1718,7 +2171,7 @@ class _$PredictionResponseImpl implements _PredictionResponse {
 
   @override
   String toString() {
-    return 'PredictionResponse(requestId: $requestId, exam: $exam, academicYear: $academicYear, rankUsed: $rankUsed, rankIsEstimated: $rankIsEstimated, rankEstimateMethod: $rankEstimateMethod, category: $category, gender: $gender, homeState: $homeState, counts: $counts, matches: $matches, disclaimer: $disclaimer)';
+    return 'PredictionResponse(requestId: $requestId, exam: $exam, academicYear: $academicYear, measure: $measure, rankUsed: $rankUsed, rankIsEstimated: $rankIsEstimated, rankEstimateMethod: $rankEstimateMethod, scoreUsed: $scoreUsed, maxScoreUsed: $maxScoreUsed, category: $category, gender: $gender, homeState: $homeState, counts: $counts, matches: $matches, disclaimer: $disclaimer)';
   }
 
   @override
@@ -1731,12 +2184,17 @@ class _$PredictionResponseImpl implements _PredictionResponse {
             (identical(other.exam, exam) || other.exam == exam) &&
             (identical(other.academicYear, academicYear) ||
                 other.academicYear == academicYear) &&
+            (identical(other.measure, measure) || other.measure == measure) &&
             (identical(other.rankUsed, rankUsed) ||
                 other.rankUsed == rankUsed) &&
             (identical(other.rankIsEstimated, rankIsEstimated) ||
                 other.rankIsEstimated == rankIsEstimated) &&
             (identical(other.rankEstimateMethod, rankEstimateMethod) ||
                 other.rankEstimateMethod == rankEstimateMethod) &&
+            (identical(other.scoreUsed, scoreUsed) ||
+                other.scoreUsed == scoreUsed) &&
+            (identical(other.maxScoreUsed, maxScoreUsed) ||
+                other.maxScoreUsed == maxScoreUsed) &&
             (identical(other.category, category) ||
                 other.category == category) &&
             (identical(other.gender, gender) || other.gender == gender) &&
@@ -1755,9 +2213,12 @@ class _$PredictionResponseImpl implements _PredictionResponse {
     requestId,
     exam,
     academicYear,
+    measure,
     rankUsed,
     rankIsEstimated,
     rankEstimateMethod,
+    scoreUsed,
+    maxScoreUsed,
     category,
     gender,
     homeState,
@@ -1783,14 +2244,17 @@ class _$PredictionResponseImpl implements _PredictionResponse {
   }
 }
 
-abstract class _PredictionResponse implements PredictionResponse {
+abstract class _PredictionResponse extends PredictionResponse {
   const factory _PredictionResponse({
     required final String requestId,
     required final ExamRef exam,
     required final int academicYear,
-    required final int rankUsed,
+    final String measure,
+    final int? rankUsed,
     required final bool rankIsEstimated,
     final String? rankEstimateMethod,
+    final num? scoreUsed,
+    final num? maxScoreUsed,
     required final String category,
     required final String gender,
     final String? homeState,
@@ -1798,6 +2262,7 @@ abstract class _PredictionResponse implements PredictionResponse {
     final List<PredictionMatch> matches,
     required final String disclaimer,
   }) = _$PredictionResponseImpl;
+  const _PredictionResponse._() : super._();
 
   factory _PredictionResponse.fromJson(Map<String, dynamic> json) =
       _$PredictionResponseImpl.fromJson;
@@ -1808,12 +2273,25 @@ abstract class _PredictionResponse implements PredictionResponse {
   ExamRef get exam;
   @override
   int get academicYear;
+
+  /// 'rank' or 'score'. Says which set of fields on each match to read, and
+  /// which way "better" points -- a lower rank is better, a higher score is.
   @override
-  int get rankUsed;
+  String get measure;
+
+  /// Null on a marks-based exam.
+  @override
+  int? get rankUsed;
   @override
   bool get rankIsEstimated;
   @override
   String? get rankEstimateMethod;
+
+  /// Both null unless the exam is marks-based.
+  @override
+  num? get scoreUsed;
+  @override
+  num? get maxScoreUsed;
   @override
   String get category;
   @override

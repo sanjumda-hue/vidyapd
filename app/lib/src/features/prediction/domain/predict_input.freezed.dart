@@ -21,6 +21,17 @@ mixin _$PredictInput {
   int? get rank => throw _privateConstructorUsedError;
   double? get percentile => throw _privateConstructorUsedError;
   bool get usePercentile => throw _privateConstructorUsedError;
+
+  /// Marks-based exams only. [maxScore] is the paper total the score is out
+  /// of; it comes from the reference payload and is sent explicitly, because
+  /// a candidate entering an older BITSAT score was marked out of 450 while
+  /// today's is out of 390.
+  double? get score => throw _privateConstructorUsedError;
+  num? get maxScore => throw _privateConstructorUsedError;
+
+  /// Set from the exam's reference entry. Decides which input the form asks
+  /// for and which field goes on the wire.
+  bool get usesMarks => throw _privateConstructorUsedError;
   String? get categoryCode => throw _privateConstructorUsedError;
   String get gender => throw _privateConstructorUsedError;
   bool get isPwd => throw _privateConstructorUsedError;
@@ -48,6 +59,9 @@ abstract class $PredictInputCopyWith<$Res> {
     int? rank,
     double? percentile,
     bool usePercentile,
+    double? score,
+    num? maxScore,
+    bool usesMarks,
     String? categoryCode,
     String gender,
     bool isPwd,
@@ -77,6 +91,9 @@ class _$PredictInputCopyWithImpl<$Res, $Val extends PredictInput>
     Object? rank = freezed,
     Object? percentile = freezed,
     Object? usePercentile = null,
+    Object? score = freezed,
+    Object? maxScore = freezed,
+    Object? usesMarks = null,
     Object? categoryCode = freezed,
     Object? gender = null,
     Object? isPwd = null,
@@ -102,6 +119,18 @@ class _$PredictInputCopyWithImpl<$Res, $Val extends PredictInput>
             usePercentile: null == usePercentile
                 ? _value.usePercentile
                 : usePercentile // ignore: cast_nullable_to_non_nullable
+                      as bool,
+            score: freezed == score
+                ? _value.score
+                : score // ignore: cast_nullable_to_non_nullable
+                      as double?,
+            maxScore: freezed == maxScore
+                ? _value.maxScore
+                : maxScore // ignore: cast_nullable_to_non_nullable
+                      as num?,
+            usesMarks: null == usesMarks
+                ? _value.usesMarks
+                : usesMarks // ignore: cast_nullable_to_non_nullable
                       as bool,
             categoryCode: freezed == categoryCode
                 ? _value.categoryCode
@@ -151,6 +180,9 @@ abstract class _$$PredictInputImplCopyWith<$Res>
     int? rank,
     double? percentile,
     bool usePercentile,
+    double? score,
+    num? maxScore,
+    bool usesMarks,
     String? categoryCode,
     String gender,
     bool isPwd,
@@ -179,6 +211,9 @@ class __$$PredictInputImplCopyWithImpl<$Res>
     Object? rank = freezed,
     Object? percentile = freezed,
     Object? usePercentile = null,
+    Object? score = freezed,
+    Object? maxScore = freezed,
+    Object? usesMarks = null,
     Object? categoryCode = freezed,
     Object? gender = null,
     Object? isPwd = null,
@@ -204,6 +239,18 @@ class __$$PredictInputImplCopyWithImpl<$Res>
         usePercentile: null == usePercentile
             ? _value.usePercentile
             : usePercentile // ignore: cast_nullable_to_non_nullable
+                  as bool,
+        score: freezed == score
+            ? _value.score
+            : score // ignore: cast_nullable_to_non_nullable
+                  as double?,
+        maxScore: freezed == maxScore
+            ? _value.maxScore
+            : maxScore // ignore: cast_nullable_to_non_nullable
+                  as num?,
+        usesMarks: null == usesMarks
+            ? _value.usesMarks
+            : usesMarks // ignore: cast_nullable_to_non_nullable
                   as bool,
         categoryCode: freezed == categoryCode
             ? _value.categoryCode
@@ -246,6 +293,9 @@ class _$PredictInputImpl extends _PredictInput {
     this.rank,
     this.percentile,
     this.usePercentile = false,
+    this.score,
+    this.maxScore,
+    this.usesMarks = false,
     this.categoryCode,
     this.gender = 'male',
     this.isPwd = false,
@@ -267,6 +317,21 @@ class _$PredictInputImpl extends _PredictInput {
   @override
   @JsonKey()
   final bool usePercentile;
+
+  /// Marks-based exams only. [maxScore] is the paper total the score is out
+  /// of; it comes from the reference payload and is sent explicitly, because
+  /// a candidate entering an older BITSAT score was marked out of 450 while
+  /// today's is out of 390.
+  @override
+  final double? score;
+  @override
+  final num? maxScore;
+
+  /// Set from the exam's reference entry. Decides which input the form asks
+  /// for and which field goes on the wire.
+  @override
+  @JsonKey()
+  final bool usesMarks;
   @override
   final String? categoryCode;
   @override
@@ -306,7 +371,7 @@ class _$PredictInputImpl extends _PredictInput {
 
   @override
   String toString() {
-    return 'PredictInput(examCode: $examCode, rank: $rank, percentile: $percentile, usePercentile: $usePercentile, categoryCode: $categoryCode, gender: $gender, isPwd: $isPwd, homeStateCode: $homeStateCode, branchCodes: $branchCodes, stateCodes: $stateCodes, collegeTypes: $collegeTypes)';
+    return 'PredictInput(examCode: $examCode, rank: $rank, percentile: $percentile, usePercentile: $usePercentile, score: $score, maxScore: $maxScore, usesMarks: $usesMarks, categoryCode: $categoryCode, gender: $gender, isPwd: $isPwd, homeStateCode: $homeStateCode, branchCodes: $branchCodes, stateCodes: $stateCodes, collegeTypes: $collegeTypes)';
   }
 
   @override
@@ -321,6 +386,11 @@ class _$PredictInputImpl extends _PredictInput {
                 other.percentile == percentile) &&
             (identical(other.usePercentile, usePercentile) ||
                 other.usePercentile == usePercentile) &&
+            (identical(other.score, score) || other.score == score) &&
+            (identical(other.maxScore, maxScore) ||
+                other.maxScore == maxScore) &&
+            (identical(other.usesMarks, usesMarks) ||
+                other.usesMarks == usesMarks) &&
             (identical(other.categoryCode, categoryCode) ||
                 other.categoryCode == categoryCode) &&
             (identical(other.gender, gender) || other.gender == gender) &&
@@ -348,6 +418,9 @@ class _$PredictInputImpl extends _PredictInput {
     rank,
     percentile,
     usePercentile,
+    score,
+    maxScore,
+    usesMarks,
     categoryCode,
     gender,
     isPwd,
@@ -372,6 +445,9 @@ abstract class _PredictInput extends PredictInput {
     final int? rank,
     final double? percentile,
     final bool usePercentile,
+    final double? score,
+    final num? maxScore,
+    final bool usesMarks,
     final String? categoryCode,
     final String gender,
     final bool isPwd,
@@ -390,6 +466,20 @@ abstract class _PredictInput extends PredictInput {
   double? get percentile;
   @override
   bool get usePercentile;
+
+  /// Marks-based exams only. [maxScore] is the paper total the score is out
+  /// of; it comes from the reference payload and is sent explicitly, because
+  /// a candidate entering an older BITSAT score was marked out of 450 while
+  /// today's is out of 390.
+  @override
+  double? get score;
+  @override
+  num? get maxScore;
+
+  /// Set from the exam's reference entry. Decides which input the form asks
+  /// for and which field goes on the wire.
+  @override
+  bool get usesMarks;
   @override
   String? get categoryCode;
   @override

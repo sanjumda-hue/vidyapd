@@ -1,10 +1,9 @@
 import 'package:flutter/material.dart';
-import 'package:intl/intl.dart';
 
 import '../../../../core/theme/app_theme.dart';
+import '../../../shared/num_format.dart';
+import '../../../shortlist/presentation/save_button.dart';
 import '../../domain/prediction_response.dart';
-
-final _n = NumberFormat.decimalPattern('en_IN');
 
 class MatchCard extends StatelessWidget {
   const MatchCard({super.key, required this.match});
@@ -14,6 +13,10 @@ class MatchCard extends StatelessWidget {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final color = GradeColors.of(match.grade);
+    // BITSAT admits on marks, so these rows carry a score band and no ranks.
+    // Everything below reads one or the other, never a mix.
+    final band = match.scoreBand;
+    final maxScore = band?.maxScore;
 
     return Card(
       child: ExpansionTile(
@@ -26,25 +29,58 @@ class MatchCard extends StatelessWidget {
           match.college.shortName ?? match.college.name,
           style: const TextStyle(fontWeight: FontWeight.w600),
         ),
+        // Two lines, because with real data the branch name alone is ambiguous.
+        // A rank can match the same programme twice -- once in the OPEN pool
+        // and once in the candidate's own category -- and those rows looked
+        // identical when only the branch showed. The programme name matters
+        // too: "B.Tech (ECE) - M.Tech in VLSI, 5 Years" is not plain ECE.
         subtitle: Padding(
           padding: const EdgeInsets.only(top: 3),
-          child: Text(
-            '${match.branch.name}  ·  ${match.college.state}',
-            style: TextStyle(
-                fontSize: 12.5, color: theme.colorScheme.onSurfaceVariant),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                match.programName,
+                maxLines: 2,
+                overflow: TextOverflow.ellipsis,
+                style: TextStyle(
+                    fontSize: 12.5,
+                    height: 1.25,
+                    color: theme.colorScheme.onSurfaceVariant),
+              ),
+              const SizedBox(height: 2),
+              Text(
+                '${match.seatType}  ·  ${match.quota}  ·  ${match.college.state}',
+                style: TextStyle(
+                    fontSize: 11.5,
+                    fontWeight: FontWeight.w500,
+                    color: theme.colorScheme.outline),
+              ),
+            ],
           ),
         ),
-        trailing: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          crossAxisAlignment: CrossAxisAlignment.end,
+        trailing: Row(
+          mainAxisSize: MainAxisSize.min,
           children: [
-            Text(match.gradeLabel,
-                style: TextStyle(
-                    fontSize: 11.5, fontWeight: FontWeight.w700, color: color)),
-            if (match.weightedClosingRank != null)
-              Text('~${_n.format(match.weightedClosingRank)}',
-                  style: TextStyle(
-                      fontSize: 11, color: theme.colorScheme.onSurfaceVariant)),
+            SaveButton(collegeBranchId: match.collegeBranchId.toString()),
+            const SizedBox(width: 2),
+            Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              crossAxisAlignment: CrossAxisAlignment.end,
+              children: [
+                Text(match.gradeLabel,
+                    style: TextStyle(
+                        fontSize: 11.5, fontWeight: FontWeight.w700, color: color)),
+                if (band?.weightedClosing != null)
+                  Text('~${outOf(band!.weightedClosing!, maxScore)}',
+                      style: TextStyle(
+                          fontSize: 11, color: theme.colorScheme.onSurfaceVariant))
+                else if (match.weightedClosingRank != null)
+                  Text('~${plainNum(match.weightedClosingRank!)}',
+                      style: TextStyle(
+                          fontSize: 11, color: theme.colorScheme.onSurfaceVariant)),
+              ],
+            ),
           ],
         ),
         children: [
@@ -52,8 +88,6 @@ class MatchCard extends StatelessWidget {
             spacing: 6,
             runSpacing: 6,
             children: [
-              _Pill(match.seatType),
-              _Pill(match.quota),
               _Pill(match.genderPool),
               _Pill(match.college.type),
               if (match.trend != 'unknown') _Pill('cutoff ${match.trend}'),
@@ -61,29 +95,49 @@ class MatchCard extends StatelessWidget {
           ),
           const SizedBox(height: 14),
           _StatRow(
-            label: 'Weighted closing rank',
-            value: match.weightedClosingRank == null
-                ? '--'
-                : _n.format(match.weightedClosingRank),
+            label: band == null ? 'Weighted closing rank' : 'Weighted closing score',
+            value: band != null
+                ? (band.weightedClosing == null
+                    ? '--'
+                    : outOf(band.weightedClosing!, maxScore))
+                : (match.weightedClosingRank == null
+                    ? '--'
+                    : plainNum(match.weightedClosingRank!)),
             hint: 'Recency-weighted over ${match.yearsAvailable} year'
                 '${match.yearsAvailable == 1 ? '' : 's'}',
           ),
-          if (match.rankMargin != null)
+          if (band?.margin != null)
+            _StatRow(
+              label: band!.margin! >= 0 ? 'You are ahead by' : 'You are short by',
+              value: plainNum(band.margin!.abs()),
+              hint: 'marks',
+            )
+          else if (match.rankMargin != null)
             _StatRow(
               label: match.rankMargin! >= 0 ? 'You are ahead by' : 'You are behind by',
-              value: _n.format(match.rankMargin!.abs()),
+              value: plainNum(match.rankMargin!.abs()),
               hint: 'ranks',
             ),
-          if (match.bestClosingRank != null && match.worstClosingRank != null)
+          // Both pairs are printed low number first. For a rank that is the
+          // strictest year; for a score it is the most lenient one, so the hint
+          // has to say which -- the same ordering means opposite things.
+          if (band?.easiestClosing != null && band?.toughestClosing != null)
             _StatRow(
               label: 'Historical range',
-              value:
-                  '${_n.format(match.bestClosingRank)} - ${_n.format(match.worstClosingRank)}',
+              value: '${plainNum(band!.easiestClosing!)} - '
+                  '${plainNum(band.toughestClosing!)}',
+              hint: 'most lenient to strictest year',
+            )
+          else if (match.bestClosingRank != null && match.worstClosingRank != null)
+            _StatRow(
+              label: 'Historical range',
+              value: '${plainNum(match.bestClosingRank!)} - '
+                  '${plainNum(match.worstClosingRank!)}',
               hint: 'strictest to most lenient year',
             ),
           if (match.cutoffHistory.isNotEmpty) ...[
             const SizedBox(height: 12),
-            Text('Closing rank by year',
+            Text(band == null ? 'Closing rank by year' : 'Closing score by year',
                 style: TextStyle(
                     fontSize: 12,
                     fontWeight: FontWeight.w600,
@@ -93,8 +147,7 @@ class MatchCard extends StatelessWidget {
               spacing: 8,
               runSpacing: 6,
               children: [
-                for (final y in match.cutoffHistory)
-                  _YearPill(year: y.year, closing: y.closing, round: y.round),
+                for (final y in match.cutoffHistory) _YearPill(year: y),
               ],
             ),
           ],
@@ -159,10 +212,8 @@ class _StatRow extends StatelessWidget {
 }
 
 class _YearPill extends StatelessWidget {
-  const _YearPill({required this.year, required this.closing, required this.round});
-  final int year;
-  final int closing;
-  final int round;
+  const _YearPill({required this.year});
+  final CutoffYear year;
 
   @override
   Widget build(BuildContext context) {
@@ -176,11 +227,17 @@ class _YearPill extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text('$year',
+          Text('${year.year}',
               style: TextStyle(fontSize: 10.5, color: scheme.outline)),
-          Text(_n.format(closing),
-              style: const TextStyle(fontSize: 12.5, fontWeight: FontWeight.w600)),
-          Text('R$round',
+          // The paper total goes on every score pill, not only when it changes:
+          // BITSAT was out of 450 until 2021 and 390 after, so a bare 306 next
+          // to a bare 226 reads as a collapse when the two are near enough the
+          // same standard.
+          Text(
+            year.isScore ? outOf(year.closing, year.max) : plainNum(year.closing),
+            style: const TextStyle(fontSize: 12.5, fontWeight: FontWeight.w600),
+          ),
+          Text('R${year.round}',
               style: TextStyle(fontSize: 9.5, color: scheme.outline)),
         ],
       ),

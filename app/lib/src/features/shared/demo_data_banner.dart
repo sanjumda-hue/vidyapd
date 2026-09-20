@@ -1,9 +1,13 @@
 import 'package:flutter/material.dart';
 
-/// Shown wherever cutoff numbers appear while the database holds seed-dev data.
+/// Shown wherever cutoff numbers appear, but ONLY while the database actually
+/// holds seed-dev data -- gate every use on `ReferenceData.hasDemoData`.
 ///
 /// The demo colleges are all suffixed "(DEMO)", but a student glancing at a
-/// results list would not notice. This makes it unmissable.
+/// results list would not notice, so this makes it unmissable. That only works
+/// while it is rare: rendering it unconditionally meant it stayed on screen
+/// after the demo seeds were gone, and a warning that is always on is one
+/// people stop reading -- including on the day it is true.
 class DemoDataBanner extends StatelessWidget {
   const DemoDataBanner({super.key});
 

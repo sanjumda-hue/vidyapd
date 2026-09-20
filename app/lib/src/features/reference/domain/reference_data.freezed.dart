@@ -193,7 +193,24 @@ mixin _$ExamOption {
   String get name => throw _privateConstructorUsedError;
   String get level => throw _privateConstructorUsedError;
   bool get hasPercentile => throw _privateConstructorUsedError;
+
+  /// True when a percentile could actually be converted to a rank for this
+  /// season. [hasPercentile] only says the exam reports one -- the form needs
+  /// this, because offering the toggle without it is offering a button that
+  /// always fails.
+  bool get hasPercentileData => throw _privateConstructorUsedError;
+
+  /// True when the authority allots on marks rather than a rank, so the form
+  /// must ask for a score out of [maxScore]. BITSAT is the only one so far.
+  bool get usesMarks => throw _privateConstructorUsedError;
+
+  /// Paper total for a marks-based exam, from the most recent year on record.
+  num? get maxScore => throw _privateConstructorUsedError;
   String? get homeStateCode => throw _privateConstructorUsedError;
+
+  /// False when nothing has been imported for this exam yet. The form greys
+  /// the option out rather than letting a student hit an empty result list.
+  bool get hasCutoffData => throw _privateConstructorUsedError;
 
   /// Serializes this ExamOption to a JSON map.
   Map<String, dynamic> toJson() => throw _privateConstructorUsedError;
@@ -217,7 +234,11 @@ abstract class $ExamOptionCopyWith<$Res> {
     String name,
     String level,
     bool hasPercentile,
+    bool hasPercentileData,
+    bool usesMarks,
+    num? maxScore,
     String? homeStateCode,
+    bool hasCutoffData,
   });
 }
 
@@ -240,7 +261,11 @@ class _$ExamOptionCopyWithImpl<$Res, $Val extends ExamOption>
     Object? name = null,
     Object? level = null,
     Object? hasPercentile = null,
+    Object? hasPercentileData = null,
+    Object? usesMarks = null,
+    Object? maxScore = freezed,
     Object? homeStateCode = freezed,
+    Object? hasCutoffData = null,
   }) {
     return _then(
       _value.copyWith(
@@ -260,10 +285,26 @@ class _$ExamOptionCopyWithImpl<$Res, $Val extends ExamOption>
                 ? _value.hasPercentile
                 : hasPercentile // ignore: cast_nullable_to_non_nullable
                       as bool,
+            hasPercentileData: null == hasPercentileData
+                ? _value.hasPercentileData
+                : hasPercentileData // ignore: cast_nullable_to_non_nullable
+                      as bool,
+            usesMarks: null == usesMarks
+                ? _value.usesMarks
+                : usesMarks // ignore: cast_nullable_to_non_nullable
+                      as bool,
+            maxScore: freezed == maxScore
+                ? _value.maxScore
+                : maxScore // ignore: cast_nullable_to_non_nullable
+                      as num?,
             homeStateCode: freezed == homeStateCode
                 ? _value.homeStateCode
                 : homeStateCode // ignore: cast_nullable_to_non_nullable
                       as String?,
+            hasCutoffData: null == hasCutoffData
+                ? _value.hasCutoffData
+                : hasCutoffData // ignore: cast_nullable_to_non_nullable
+                      as bool,
           )
           as $Val,
     );
@@ -284,7 +325,11 @@ abstract class _$$ExamOptionImplCopyWith<$Res>
     String name,
     String level,
     bool hasPercentile,
+    bool hasPercentileData,
+    bool usesMarks,
+    num? maxScore,
     String? homeStateCode,
+    bool hasCutoffData,
   });
 }
 
@@ -306,7 +351,11 @@ class __$$ExamOptionImplCopyWithImpl<$Res>
     Object? name = null,
     Object? level = null,
     Object? hasPercentile = null,
+    Object? hasPercentileData = null,
+    Object? usesMarks = null,
+    Object? maxScore = freezed,
     Object? homeStateCode = freezed,
+    Object? hasCutoffData = null,
   }) {
     return _then(
       _$ExamOptionImpl(
@@ -326,10 +375,26 @@ class __$$ExamOptionImplCopyWithImpl<$Res>
             ? _value.hasPercentile
             : hasPercentile // ignore: cast_nullable_to_non_nullable
                   as bool,
+        hasPercentileData: null == hasPercentileData
+            ? _value.hasPercentileData
+            : hasPercentileData // ignore: cast_nullable_to_non_nullable
+                  as bool,
+        usesMarks: null == usesMarks
+            ? _value.usesMarks
+            : usesMarks // ignore: cast_nullable_to_non_nullable
+                  as bool,
+        maxScore: freezed == maxScore
+            ? _value.maxScore
+            : maxScore // ignore: cast_nullable_to_non_nullable
+                  as num?,
         homeStateCode: freezed == homeStateCode
             ? _value.homeStateCode
             : homeStateCode // ignore: cast_nullable_to_non_nullable
                   as String?,
+        hasCutoffData: null == hasCutoffData
+            ? _value.hasCutoffData
+            : hasCutoffData // ignore: cast_nullable_to_non_nullable
+                  as bool,
       ),
     );
   }
@@ -343,7 +408,11 @@ class _$ExamOptionImpl implements _ExamOption {
     required this.name,
     required this.level,
     required this.hasPercentile,
+    this.hasPercentileData = false,
+    this.usesMarks = false,
+    this.maxScore,
     this.homeStateCode,
+    this.hasCutoffData = true,
   });
 
   factory _$ExamOptionImpl.fromJson(Map<String, dynamic> json) =>
@@ -357,12 +426,36 @@ class _$ExamOptionImpl implements _ExamOption {
   final String level;
   @override
   final bool hasPercentile;
+
+  /// True when a percentile could actually be converted to a rank for this
+  /// season. [hasPercentile] only says the exam reports one -- the form needs
+  /// this, because offering the toggle without it is offering a button that
+  /// always fails.
+  @override
+  @JsonKey()
+  final bool hasPercentileData;
+
+  /// True when the authority allots on marks rather than a rank, so the form
+  /// must ask for a score out of [maxScore]. BITSAT is the only one so far.
+  @override
+  @JsonKey()
+  final bool usesMarks;
+
+  /// Paper total for a marks-based exam, from the most recent year on record.
+  @override
+  final num? maxScore;
   @override
   final String? homeStateCode;
 
+  /// False when nothing has been imported for this exam yet. The form greys
+  /// the option out rather than letting a student hit an empty result list.
+  @override
+  @JsonKey()
+  final bool hasCutoffData;
+
   @override
   String toString() {
-    return 'ExamOption(code: $code, name: $name, level: $level, hasPercentile: $hasPercentile, homeStateCode: $homeStateCode)';
+    return 'ExamOption(code: $code, name: $name, level: $level, hasPercentile: $hasPercentile, hasPercentileData: $hasPercentileData, usesMarks: $usesMarks, maxScore: $maxScore, homeStateCode: $homeStateCode, hasCutoffData: $hasCutoffData)';
   }
 
   @override
@@ -375,14 +468,32 @@ class _$ExamOptionImpl implements _ExamOption {
             (identical(other.level, level) || other.level == level) &&
             (identical(other.hasPercentile, hasPercentile) ||
                 other.hasPercentile == hasPercentile) &&
+            (identical(other.hasPercentileData, hasPercentileData) ||
+                other.hasPercentileData == hasPercentileData) &&
+            (identical(other.usesMarks, usesMarks) ||
+                other.usesMarks == usesMarks) &&
+            (identical(other.maxScore, maxScore) ||
+                other.maxScore == maxScore) &&
             (identical(other.homeStateCode, homeStateCode) ||
-                other.homeStateCode == homeStateCode));
+                other.homeStateCode == homeStateCode) &&
+            (identical(other.hasCutoffData, hasCutoffData) ||
+                other.hasCutoffData == hasCutoffData));
   }
 
   @JsonKey(includeFromJson: false, includeToJson: false)
   @override
-  int get hashCode =>
-      Object.hash(runtimeType, code, name, level, hasPercentile, homeStateCode);
+  int get hashCode => Object.hash(
+    runtimeType,
+    code,
+    name,
+    level,
+    hasPercentile,
+    hasPercentileData,
+    usesMarks,
+    maxScore,
+    homeStateCode,
+    hasCutoffData,
+  );
 
   /// Create a copy of ExamOption
   /// with the given fields replaced by the non-null parameter values.
@@ -404,7 +515,11 @@ abstract class _ExamOption implements ExamOption {
     required final String name,
     required final String level,
     required final bool hasPercentile,
+    final bool hasPercentileData,
+    final bool usesMarks,
+    final num? maxScore,
     final String? homeStateCode,
+    final bool hasCutoffData,
   }) = _$ExamOptionImpl;
 
   factory _ExamOption.fromJson(Map<String, dynamic> json) =
@@ -418,8 +533,29 @@ abstract class _ExamOption implements ExamOption {
   String get level;
   @override
   bool get hasPercentile;
+
+  /// True when a percentile could actually be converted to a rank for this
+  /// season. [hasPercentile] only says the exam reports one -- the form needs
+  /// this, because offering the toggle without it is offering a button that
+  /// always fails.
+  @override
+  bool get hasPercentileData;
+
+  /// True when the authority allots on marks rather than a rank, so the form
+  /// must ask for a score out of [maxScore]. BITSAT is the only one so far.
+  @override
+  bool get usesMarks;
+
+  /// Paper total for a marks-based exam, from the most recent year on record.
+  @override
+  num? get maxScore;
   @override
   String? get homeStateCode;
+
+  /// False when nothing has been imported for this exam yet. The form greys
+  /// the option out rather than letting a student hit an empty result list.
+  @override
+  bool get hasCutoffData;
 
   /// Create a copy of ExamOption
   /// with the given fields replaced by the non-null parameter values.
@@ -639,6 +775,10 @@ mixin _$ReferenceData {
   List<BranchOption> get branches => throw _privateConstructorUsedError;
   List<String> get collegeTypes => throw _privateConstructorUsedError;
 
+  /// True when the invented db/seeds-dev colleges are loaded. Defaults to
+  /// false so a real database never shows the demo warning.
+  bool get hasDemoData => throw _privateConstructorUsedError;
+
   /// Serializes this ReferenceData to a JSON map.
   Map<String, dynamic> toJson() => throw _privateConstructorUsedError;
 
@@ -664,6 +804,7 @@ abstract class $ReferenceDataCopyWith<$Res> {
     List<LookupItem> states,
     List<BranchOption> branches,
     List<String> collegeTypes,
+    bool hasDemoData,
   });
 }
 
@@ -689,6 +830,7 @@ class _$ReferenceDataCopyWithImpl<$Res, $Val extends ReferenceData>
     Object? states = null,
     Object? branches = null,
     Object? collegeTypes = null,
+    Object? hasDemoData = null,
   }) {
     return _then(
       _value.copyWith(
@@ -720,6 +862,10 @@ class _$ReferenceDataCopyWithImpl<$Res, $Val extends ReferenceData>
                 ? _value.collegeTypes
                 : collegeTypes // ignore: cast_nullable_to_non_nullable
                       as List<String>,
+            hasDemoData: null == hasDemoData
+                ? _value.hasDemoData
+                : hasDemoData // ignore: cast_nullable_to_non_nullable
+                      as bool,
           )
           as $Val,
     );
@@ -743,6 +889,7 @@ abstract class _$$ReferenceDataImplCopyWith<$Res>
     List<LookupItem> states,
     List<BranchOption> branches,
     List<String> collegeTypes,
+    bool hasDemoData,
   });
 }
 
@@ -767,6 +914,7 @@ class __$$ReferenceDataImplCopyWithImpl<$Res>
     Object? states = null,
     Object? branches = null,
     Object? collegeTypes = null,
+    Object? hasDemoData = null,
   }) {
     return _then(
       _$ReferenceDataImpl(
@@ -798,6 +946,10 @@ class __$$ReferenceDataImplCopyWithImpl<$Res>
             ? _value._collegeTypes
             : collegeTypes // ignore: cast_nullable_to_non_nullable
                   as List<String>,
+        hasDemoData: null == hasDemoData
+            ? _value.hasDemoData
+            : hasDemoData // ignore: cast_nullable_to_non_nullable
+                  as bool,
       ),
     );
   }
@@ -814,6 +966,7 @@ class _$ReferenceDataImpl implements _ReferenceData {
     required final List<LookupItem> states,
     required final List<BranchOption> branches,
     required final List<String> collegeTypes,
+    this.hasDemoData = false,
   }) : _exams = exams,
        _categories = categories,
        _genders = genders,
@@ -881,9 +1034,15 @@ class _$ReferenceDataImpl implements _ReferenceData {
     return EqualUnmodifiableListView(_collegeTypes);
   }
 
+  /// True when the invented db/seeds-dev colleges are loaded. Defaults to
+  /// false so a real database never shows the demo warning.
+  @override
+  @JsonKey()
+  final bool hasDemoData;
+
   @override
   String toString() {
-    return 'ReferenceData(exams: $exams, categories: $categories, genders: $genders, quotas: $quotas, states: $states, branches: $branches, collegeTypes: $collegeTypes)';
+    return 'ReferenceData(exams: $exams, categories: $categories, genders: $genders, quotas: $quotas, states: $states, branches: $branches, collegeTypes: $collegeTypes, hasDemoData: $hasDemoData)';
   }
 
   @override
@@ -903,7 +1062,9 @@ class _$ReferenceDataImpl implements _ReferenceData {
             const DeepCollectionEquality().equals(
               other._collegeTypes,
               _collegeTypes,
-            ));
+            ) &&
+            (identical(other.hasDemoData, hasDemoData) ||
+                other.hasDemoData == hasDemoData));
   }
 
   @JsonKey(includeFromJson: false, includeToJson: false)
@@ -917,6 +1078,7 @@ class _$ReferenceDataImpl implements _ReferenceData {
     const DeepCollectionEquality().hash(_states),
     const DeepCollectionEquality().hash(_branches),
     const DeepCollectionEquality().hash(_collegeTypes),
+    hasDemoData,
   );
 
   /// Create a copy of ReferenceData
@@ -942,6 +1104,7 @@ abstract class _ReferenceData implements ReferenceData {
     required final List<LookupItem> states,
     required final List<BranchOption> branches,
     required final List<String> collegeTypes,
+    final bool hasDemoData,
   }) = _$ReferenceDataImpl;
 
   factory _ReferenceData.fromJson(Map<String, dynamic> json) =
@@ -961,6 +1124,11 @@ abstract class _ReferenceData implements ReferenceData {
   List<BranchOption> get branches;
   @override
   List<String> get collegeTypes;
+
+  /// True when the invented db/seeds-dev colleges are loaded. Defaults to
+  /// false so a real database never shows the demo warning.
+  @override
+  bool get hasDemoData;
 
   /// Create a copy of ReferenceData
   /// with the given fields replaced by the non-null parameter values.

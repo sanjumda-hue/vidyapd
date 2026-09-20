@@ -22,14 +22,26 @@ class ApiClient {
 
   final Dio _dio;
 
+  /// Set once the student signs in; cleared on sign-out or a rejected token.
+  /// Held here rather than passed per call so every repository picks it up.
+  String? _token;
+
+  // ignore: avoid_setters_without_getters
+  set token(String? value) => _token = value;
+
   Future<T> get<T>(String path, {Map<String, dynamic>? query}) =>
       _send<T>(() => _dio.get<Map<String, dynamic>>(path, queryParameters: query));
 
   Future<T> post<T>(String path, {Object? body}) =>
       _send<T>(() => _dio.post<Map<String, dynamic>>(path, data: body));
 
+  Future<T> delete<T>(String path) =>
+      _send<T>(() => _dio.delete<Map<String, dynamic>>(path));
+
   Future<T> _send<T>(Future<Response<Map<String, dynamic>>> Function() call) async {
     try {
+      _dio.options.headers['Authorization'] =
+          _token == null ? null : 'Bearer $_token';
       final response = await call();
       final body = response.data;
       if (body == null) {

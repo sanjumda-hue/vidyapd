@@ -11,6 +11,17 @@ class PredictInput with _$PredictInput {
     int? rank,
     double? percentile,
     @Default(false) bool usePercentile,
+
+    /// Marks-based exams only. [maxScore] is the paper total the score is out
+    /// of; it comes from the reference payload and is sent explicitly, because
+    /// a candidate entering an older BITSAT score was marked out of 450 while
+    /// today's is out of 390.
+    double? score,
+    num? maxScore,
+
+    /// Set from the exam's reference entry. Decides which input the form asks
+    /// for and which field goes on the wire.
+    @Default(false) bool usesMarks,
     String? categoryCode,
     @Default('male') String gender,
     @Default(false) bool isPwd,
@@ -22,14 +33,23 @@ class PredictInput with _$PredictInput {
 
   const PredictInput._();
 
-  bool get isValid =>
-      examCode != null &&
-      categoryCode != null &&
-      (usePercentile ? percentile != null : (rank != null && rank! > 0));
+  bool get isValid {
+    if (examCode == null || categoryCode == null) return false;
+    if (usesMarks) {
+      return score != null && score! > 0 && (maxScore == null || score! <= maxScore!);
+    }
+    return usePercentile ? percentile != null : (rank != null && rank! > 0);
+  }
 
   Map<String, dynamic> toRequestBody() => {
         'examCode': examCode,
-        if (usePercentile) 'percentile': percentile else 'rank': rank,
+        if (usesMarks) ...{
+          'score': score,
+          if (maxScore != null) 'maxScore': maxScore,
+        } else if (usePercentile)
+          'percentile': percentile
+        else
+          'rank': rank,
         'categoryCode': categoryCode,
         'gender': gender,
         'isPwd': isPwd,
