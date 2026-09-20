@@ -14,3 +14,21 @@ Thumbs.db
 
 # Local PostgreSQL scratch (portable build lives outside the repo anyway)
 pgsql/
+
+# Scraped source data. Every file under data/ is re-derivable by re-running the
+# matching script in tools/, and together they are ~52 MB -- a git history that
+# carries them is one nobody wants to clone. The example file stays: it is what
+# documents the column layout the importer expects.
+# data/* rather than data/ -- git does not descend into an excluded directory,
+# so a negation under one never gets a chance to match.
+data/*
+!data/EXAMPLE-FORMAT-ONLY-not-real-data.csv
+
+# Raw page dumps kept while working out how a portal serves its cutoffs
+# (josaa.html, kea.html, wb2026.html and friends). Anchored to the repo root
+# and to api/, so app/web/index.html is untouched.
+/*.html
+/api/*.html
+
+# Scratch
+.tmp/
