@@ -239,28 +239,50 @@ export class ImportRunner {
       throw new BadRequestException(`Job ${jobId} is missing year or counselling process.`);
     }
 
-    // An override is recorded on the job when the file belongs to a specific
-    // exam rather than the counselling's primary one.
+    // Which exam a row belongs to depends on the COLLEGE, not just the process.
+    //
+    // JoSAA allots IIT seats on the JEE Advanced rank and everything else on
+    // the JEE Main rank, which is exactly what counselling_exams
+    // .applies_to_college_types records. Taking the process's primary exam for
+    // every row ignored that and filed 68,863 IIT cutoffs under JEE Main, so a
+    // JEE Main rank of 500 was matched against an Advanced closing rank of 610
+    // and called a strong match -- while a real JEE Advanced rank returned
+    // nothing at all.
     const override = (job.validation_report as { examCodeOverride?: string } | null)
       ?.examCodeOverride;
-    const exam = override
-      ? await this.prisma.counselling_exams.findFirst({
-          where: {
-            counselling_process_id: job.counselling_process_id,
-            exams: { code: override },
-          },
-          select: { exam_id: true },
-        })
-      : await this.prisma.counselling_exams.findFirst({
-          where: { counselling_process_id: job.counselling_process_id, is_primary: true },
-          select: { exam_id: true },
-        });
-    if (!exam) {
+
+    const links = await this.prisma.counselling_exams.findMany({
+      where: { counselling_process_id: job.counselling_process_id },
+      select: { exam_id: true, is_primary: true, applies_to_college_types: true, exams: { select: { code: true } } },
+    });
+
+    // An override names the exam for the whole file (WBJEEB ships one per
+    // exam), and beats any per-college routing.
+    const overridden = override ? links.find((l) => l.exams.code === override) : undefined;
+    if (override && !overridden) {
       throw new BadRequestException(
-        override
-          ? `Exam ${override} is not linked to counselling process ${job.counselling_process_id} in counselling_exams.`
-          : `Counselling process ${job.counselling_process_id} has no primary exam in counselling_exams.`,
+        `Exam ${override} is not linked to counselling process ${job.counselling_process_id} in counselling_exams.`,
       );
+    }
+
+    const fallbackExamId =
+      overridden?.exam_id ??
+      links.find((l) => l.is_primary)?.exam_id ??
+      (links.length === 1 ? links[0].exam_id : undefined);
+    if (fallbackExamId === undefined) {
+      throw new BadRequestException(
+        `Counselling process ${job.counselling_process_id} has no primary exam in counselling_exams.`,
+      );
+    }
+
+    // college_type -> exam, for the links that name the types they cover.
+    const examByCollegeType = new Map<string, number>();
+    if (!overridden) {
+      for (const l of links) {
+        for (const t of l.applies_to_college_types ?? []) {
+          examByCollegeType.set(t, l.exam_id);
+        }
+      }
     }
 
     // cutoff_data.rank_basis defaults to 'category_rank'. That was harmless
@@ -280,6 +302,24 @@ export class ImportRunner {
 
     let inserted = 0;
     let updated = 0;
+
+    // Every college this job touches, so the per-row exam can be resolved
+    // without awaiting inside the batched value list below.
+    const collegeIds = [
+      ...new Set(
+        staged.map((r) => (r.normalized as unknown as NormalizedCutoffRow).collegeId),
+      ),
+    ];
+    const collegeType = new Map(
+      (
+        await this.prisma.colleges.findMany({
+          where: { id: { in: collegeIds } },
+          select: { id: true, college_type: true },
+        })
+      ).map((c) => [c.id, c.college_type as string]),
+    );
+    const examFor = (n: NormalizedCutoffRow): number =>
+      examByCollegeType.get(collegeType.get(n.collegeId) ?? '') ?? fallbackExamId;
 
     // Resolve every round this job touches up front: the insert below is
     // batched, so it cannot await inside the value list.
@@ -301,7 +341,7 @@ export class ImportRunner {
       for (const row of batch) {
         const n = row.normalized as unknown as NormalizedCutoffRow;
         unique.set(
-          [exam.exam_id, n.roundNo, n.collegeBranchId, n.seatTypeId, n.quotaId, n.genderId].join('|'),
+          [examFor(n), n.roundNo, n.collegeBranchId, n.seatTypeId, n.quotaId, n.genderId].join('|'),
           row,
         );
       }
@@ -310,7 +350,7 @@ export class ImportRunner {
         const n = row.normalized as unknown as NormalizedCutoffRow;
         return Prisma.sql`(
           ${job.academic_year}::SMALLINT, ${job.counselling_process_id},
-          ${rounds.get(n.roundNo)}, ${n.roundNo}::SMALLINT, ${exam.exam_id}::SMALLINT,
+          ${rounds.get(n.roundNo)}, ${n.roundNo}::SMALLINT, ${examFor(n)}::SMALLINT,
           ${n.collegeBranchId}::BIGINT, ${n.collegeId}, ${n.branchId}::SMALLINT,
           ${n.seatTypeId}::SMALLINT, ${n.seatTypeId}::SMALLINT,
           ${n.quotaId}::SMALLINT, ${n.genderId}::SMALLINT,

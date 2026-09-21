@@ -11,6 +11,7 @@ authorities** — 328,367 cutoff rows:
 | Authority | Years | Rows | Measure |
 | --------- | ----- | ---- | ------- |
 | JoSAA     | 2023-2026, all 22 rounds | 257,016 | rank |
+|  ├ IITs   | attributed to JEE Advanced | 68,863 | rank |
 | CSAB      | 2023-2026 special rounds | 44,617 | rank |
 | WBJEEB    | 2023-2026 | 15,870 | rank |
 | UPTAC     | 2026 | 9,880 | rank |
@@ -465,8 +466,11 @@ disclaimer.
 
 These are scaffolds, not finished work:
 
-- **Four of 17 seeded exams have cutoffs** — JEE Main, WBJEE, COMEDK UGET and
-  BITSAT. The rest are marked "no data yet" in the predict form, and picking one
+- **Five of 17 seeded exams have cutoffs** — JEE Main, JEE Advanced (the IIT
+  half of JoSAA), WBJEE, COMEDK UGET and BITSAT. VITEEE and SRMJEEE cannot
+  follow: neither VIT nor SRM publishes branch-wise closing ranks, and VIT says
+  so outright. The remaining state bodies (KCET, TNEA, MHT-CET, AP/TS EAMCET)
+  do publish, and are simply not wired up yet. The rest are marked "no data yet" in the predict form, and picking one
   gives an empty state that says so by name. `/reference/bootstrap` reports this
   per exam as `hasCutoffData`, read from the two trend views the predictor
   queries, so the flag cannot drift from reality.

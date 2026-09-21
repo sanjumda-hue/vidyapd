@@ -325,6 +325,40 @@ void main() {
     expect(bitsCell.measure, isNot(iitCell.measure));
   });
 
+  test('IIT cutoffs answer to JEE Advanced, not JEE Main', () async {
+    // counselling_exams.applies_to_college_types has always said JoSAA allots
+    // IITs on the Advanced rank, but the publisher took the process's primary
+    // exam for every row and filed 68,863 IIT cutoffs under JEE Main. A Main
+    // rank of 500 was then matched against an Advanced closing rank of 610 and
+    // called a strong match, while a real Advanced rank returned nothing.
+    Future<PredictionResponse> run(String exam, {List<String>? types}) async =>
+        PredictionResponse.fromJson(
+          await api.post<Map<String, dynamic>>('/prediction', body: {
+            'examCode': exam,
+            'rank': 500,
+            'categoryCode': 'OPEN',
+            'gender': 'male',
+            if (types != null) 'collegeTypes': types,
+            'limit': 20,
+          }),
+        );
+
+    final advanced = await run('JEE_ADVANCED');
+    expect(advanced.matches, isNotEmpty,
+        reason: 'the IIT rows exist; an Advanced rank has to reach them');
+    expect(advanced.matches.every((m) => m.college.type == 'IIT'), isTrue,
+        reason: 'JEE Advanced admits to IITs and nothing else here');
+
+    final main = await run('JEE_MAIN', types: ['IIT']);
+    expect(main.matches, isEmpty,
+        reason: 'a JEE Main rank cannot be compared against an Advanced '
+            'closing rank, so no IIT may come back for one');
+
+    // And the rest of JoSAA still belongs to JEE Main.
+    final nits = await run('JEE_MAIN', types: ['NIT']);
+    expect(nits.matches, isNotEmpty);
+  });
+
   test('a bad request surfaces the server validation message', () async {
     await expectLater(
       api.post<Map<String, dynamic>>('/prediction',
