@@ -82,6 +82,13 @@ Redis is optional — leave `REDIS_URL` empty and the API uses an in-memory cach
 cd app && flutter run -d chrome
 ```
 
+`dev.ps1` runs the API from its build. To work on the API itself, run it in
+watch mode instead so edits under `api/src` reload:
+
+```bash
+cd api && npm run dev
+```
+
 The portable Postgres has no Windows service, so nothing survives a reboot. If
 the app says **"Cannot reach the server. Is the API running on
 http://localhost:3000/api/v1?"**, that is what happened — `.\dev.ps1 up` is the
