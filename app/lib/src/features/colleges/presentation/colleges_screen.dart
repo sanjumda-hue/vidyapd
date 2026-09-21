@@ -4,8 +4,10 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
+import '../../reference/data/reference_repository.dart';
 import '../data/colleges_repository.dart';
 import '../domain/college.dart';
+import 'widgets/college_filter_bar.dart';
 
 class CollegesScreen extends ConsumerStatefulWidget {
   const CollegesScreen({super.key});
@@ -15,8 +17,10 @@ class CollegesScreen extends ConsumerStatefulWidget {
 }
 
 class _CollegesScreenState extends ConsumerState<CollegesScreen> {
-  String _query = '';
+  CollegeFilter _filter = emptyCollegeFilter;
   Timer? _debounce;
+
+  void _set(CollegeFilter next) => setState(() => _filter = next);
 
   @override
   void dispose() {
@@ -28,14 +32,15 @@ class _CollegesScreenState extends ConsumerState<CollegesScreen> {
   void _onChanged(String v) {
     _debounce?.cancel();
     _debounce = Timer(const Duration(milliseconds: 350), () {
-      if (mounted) setState(() => _query = v.trim());
+      if (mounted) _set(withQuery(_filter, v.trim()));
     });
   }
 
   @override
   Widget build(BuildContext context) {
-    final results = ref.watch(collegeSearchProvider(_query));
+    final results = ref.watch(collegeSearchProvider(_filter));
     final selected = ref.watch(compareSelectionProvider);
+    final reference = ref.watch(referenceDataProvider).valueOrNull;
 
     return Scaffold(
       appBar: AppBar(
@@ -55,7 +60,7 @@ class _CollegesScreenState extends ConsumerState<CollegesScreen> {
       ),
       body: Center(
         child: ConstrainedBox(
-          constraints: const BoxConstraints(maxWidth: 720),
+          constraints: const BoxConstraints(maxWidth: 980),
           child: Column(
             children: [
               Padding(
@@ -67,6 +72,14 @@ class _CollegesScreenState extends ConsumerState<CollegesScreen> {
                     prefixIcon: Icon(Icons.search),
                   ),
                 ),
+              ),
+              CollegeFilterBar(
+                filter: _filter,
+                states: reference?.states ?? const [],
+                exams: reference?.exams ?? const [],
+                branches: reference?.branches ?? const [],
+                total: results.valueOrNull?.total,
+                onChanged: _set,
               ),
               Expanded(
                 child: results.when(

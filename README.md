@@ -519,6 +519,15 @@ These are scaffolds, not finished work:
   `colleges` (list, detail, compare), `shortlist`, `auth`, `admin`. Still empty
   controller/service shells: `branches`, `compare`, `users`, `notifications`,
   `calendar`, `counselling` — and the matching app tiles say so.
+- **Ownership and NIRF rating are not filterable, because they hold nothing.**
+  580 of 583 colleges read "government" and 3 read "private" — the importer
+  defaults the column and no source has ever set it — and
+  `college_accreditations` has no NIRF rows at all. The college list filters on
+  type, state, exam and branch, which are real.
+- **`college_type` is IIT/NIT/IIIT plus a junk drawer.** The resolver types
+  anything it cannot recognise by name as GFTI, so 482 colleges are in that
+  bucket, private ones included. The UI shows it as "Other" rather than
+  claiming they are Government Funded Technical Institutes.
 - **The app requires a sign-in; the API does not.** The Flutter router redirects
   every route to `/sign-in` until `/auth/me` accepts a stored token, and sends
   you back there on sign-out. That gates the UI, not the data: `POST /prediction`

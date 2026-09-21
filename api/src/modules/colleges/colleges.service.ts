@@ -31,10 +31,20 @@ export class CollegesService {
     q?: string;
     stateCode?: string;
     type?: string;
+    examCode?: string;
+    branchCode?: string;
     limit: number;
     skip: number;
   }): Promise<{ items: CollegeListItem[]; total: number }> {
-    const { q = null, stateCode = null, type = null, limit, skip } = params;
+    const {
+      q = null,
+      stateCode = null,
+      type = null,
+      examCode = null,
+      branchCode = null,
+      limit,
+      skip,
+    } = params;
 
     const items = await this.prisma.$queryRaw<CollegeListItem[]>`
       SELECT c.slug, c.name, c.short_name, c.college_type::TEXT, s.name AS state_name,
@@ -52,6 +62,17 @@ export class CollegesService {
              OR c.short_name % ${q}::TEXT)
         AND (${stateCode}::TEXT IS NULL OR s.code = ${stateCode}::TEXT)
         AND (${type}::TEXT IS NULL OR c.college_type::TEXT = ${type}::TEXT)
+        -- "Accepts this exam" means a cutoff has actually been published for
+        -- it here, not that a brochure says so. EXISTS rather than a join so a
+        -- college with 800 cutoff rows is still one row in this list.
+        AND (${examCode}::TEXT IS NULL OR EXISTS (
+              SELECT 1 FROM cutoff_data cd
+              JOIN exams e ON e.id = cd.exam_id
+              WHERE cd.college_id = c.id AND e.code = ${examCode}::TEXT))
+        AND (${branchCode}::TEXT IS NULL OR EXISTS (
+              SELECT 1 FROM college_branches cb2
+              JOIN branches b ON b.id = cb2.branch_id
+              WHERE cb2.college_id = c.id AND cb2.is_active AND b.code = ${branchCode}::TEXT))
       ORDER BY
         -- Exact substring hits before fuzzy ones, then ranked colleges first.
         CASE WHEN ${q}::TEXT IS NULL THEN 0
@@ -74,6 +95,17 @@ export class CollegesService {
              OR c.short_name % ${q}::TEXT)
         AND (${stateCode}::TEXT IS NULL OR s.code = ${stateCode}::TEXT)
         AND (${type}::TEXT IS NULL OR c.college_type::TEXT = ${type}::TEXT)
+        -- "Accepts this exam" means a cutoff has actually been published for
+        -- it here, not that a brochure says so. EXISTS rather than a join so a
+        -- college with 800 cutoff rows is still one row in this list.
+        AND (${examCode}::TEXT IS NULL OR EXISTS (
+              SELECT 1 FROM cutoff_data cd
+              JOIN exams e ON e.id = cd.exam_id
+              WHERE cd.college_id = c.id AND e.code = ${examCode}::TEXT))
+        AND (${branchCode}::TEXT IS NULL OR EXISTS (
+              SELECT 1 FROM college_branches cb2
+              JOIN branches b ON b.id = cb2.branch_id
+              WHERE cb2.college_id = c.id AND cb2.is_active AND b.code = ${branchCode}::TEXT))
     `;
 
     return { items, total };

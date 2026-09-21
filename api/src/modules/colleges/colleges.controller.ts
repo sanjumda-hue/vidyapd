@@ -16,6 +16,8 @@ export class CollegesController {
       q: q.q,
       stateCode: q.stateCode,
       type: q.type,
+      examCode: q.examCode,
+      branchCode: q.branchCode,
       limit: q.limit,
       skip: q.skip,
     });

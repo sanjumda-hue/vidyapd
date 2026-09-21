@@ -15,10 +15,23 @@ export class CollegeQueryDto extends PaginationDto {
   @IsString()
   stateCode?: string;
 
-  @ApiPropertyOptional({ example: 'NIT' })
+  @ApiPropertyOptional({ example: 'NIT', description: 'IIT, NIT, IIIT, GFTI, DEEMED, ...' })
   @IsOptional()
   @IsString()
   type?: string;
+
+  @ApiPropertyOptional({
+    example: 'JEE_ADVANCED',
+    description: 'Colleges with a published cutoff for this exam.',
+  })
+  @IsOptional()
+  @IsString()
+  examCode?: string;
+
+  @ApiPropertyOptional({ example: 'CSE', description: 'Colleges offering this branch.' })
+  @IsOptional()
+  @IsString()
+  branchCode?: string;
 }
 
 export class CompareDto {
