@@ -1,5 +1,7 @@
 import { ExecutionContext, createParamDecorator } from '@nestjs/common';
-import { Request } from 'express';
+// A type-only import: express itself arrives through @nestjs/platform-express
+// and is not a direct dependency, so nothing here should reach for it at runtime.
+import type { Request } from 'express';
 
 import { RequestUser } from '../guards/jwt-auth.guard';
 
