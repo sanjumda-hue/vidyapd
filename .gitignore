@@ -24,6 +24,12 @@ pgsql/
 data/*
 !data/EXAMPLE-FORMAT-ONLY-not-real-data.csv
 
+# The two mock-test sample files, so the CSV format the upload expects is
+# visible in the repo rather than only in an error message.
+!data/mock/
+data/mock/*
+!data/mock/EXAMPLE-*.csv
+
 # Raw page dumps kept while working out how a portal serves its cutoffs
 # (josaa.html, kea.html, wb2026.html and friends). Anchored to the repo root
 # and to api/, so app/web/index.html is untouched.

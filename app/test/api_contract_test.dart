@@ -6,6 +6,7 @@ import 'package:vidyapd/src/core/api/api_client.dart';
 import 'package:vidyapd/src/features/prediction/domain/predict_input.dart';
 import 'package:vidyapd/src/features/prediction/domain/prediction_response.dart';
 import 'package:vidyapd/src/features/colleges/domain/college.dart';
+import 'package:vidyapd/src/features/mock/data/mock_repository.dart';
 import 'package:vidyapd/src/features/reference/domain/reference_data.dart';
 
 /// Parses real API responses with the real models.
@@ -357,6 +358,89 @@ void main() {
     // And the rest of JoSAA still belongs to JEE Main.
     final nits = await run('JEE_MAIN', types: ['NIT']);
     expect(nits.matches, isNotEmpty);
+  });
+
+  /// The mock test round trip, end to end against the live API.
+  ///
+  /// This is here because the first version of it failed in the browser and
+  /// nowhere else: the server had been rebuilt without `status` on each
+  /// answer, [MockAnswer] casts it to a non-null String, and the whole result
+  /// card died on a TypeError while the score itself was perfectly correct.
+  /// Analyze cannot see that, and the scoring unit tests pass either way.
+  test('a mock paper can be created and a response sheet scored', () async {
+    final login = await api.post<Map<String, dynamic>>('/auth/login',
+        body: {'email': 'guardtest@example.com', 'password': 'guardtest123'});
+    api.token = login['token'] as String;
+
+    final repo = MockRepository(api);
+    final paperId = await repo.createPaper(
+      examCode: 'JEE_MAIN',
+      title: 'Contract test paper',
+      answerKeyCsv: '''
+Question No,Section,Type,Correct Answer
+1,Physics,MCQ,A
+2,Physics,MCQ,C
+3,Physics,Numerical,9.8
+4,Chemistry,MCQ,B
+''',
+    );
+
+    // Right, wrong, right (written differently), left blank.
+    final result = await repo.submit(paperId, '''
+Question No,Your Answer
+1,A
+2,B
+3,9.80
+4,
+''');
+
+    expect(result.score, 7, reason: '4 + 4 - 1, and nothing for the blank');
+    expect(result.maxMarks, 16);
+    expect(result.correct, 2);
+    expect(result.wrong, 1);
+    expect(result.skipped, 1);
+    expect(result.examCode, 'JEE_MAIN');
+    expect(result.marksCorrect, 4);
+    expect(result.marksWrong, 1);
+
+    // The three states have to arrive distinguishable. Without `status` the
+    // card cannot tell a blank from a wrong answer, and colours both red.
+    expect(result.answers.map((a) => a.status),
+        ['correct', 'wrong', 'correct', 'skipped']);
+
+    expect(result.sections.map((s) => s.section), ['Physics', 'Chemistry']);
+    expect(result.sections.first.score, 7);
+  });
+
+  test('a response sheet from the wrong paper is refused, not scored zero',
+      () async {
+    final login = await api.post<Map<String, dynamic>>('/auth/login',
+        body: {'email': 'guardtest@example.com', 'password': 'guardtest123'});
+    api.token = login['token'] as String;
+
+    final repo = MockRepository(api);
+    final paperId = await repo.createPaper(
+      examCode: 'JEE_MAIN',
+      title: 'Contract test, two questions',
+      answerKeyCsv: '''
+Question No,Type,Correct Answer
+1,MCQ,A
+2,MCQ,B
+''',
+    );
+
+    // Question 90 does not exist on this paper, so this is the wrong sheet.
+    // Scoring it anyway would hand back a plausible number for a paper the
+    // student did not sit.
+    await expectLater(
+      repo.submit(paperId, '''
+Question No,Your Answer
+1,A
+2,B
+90,C
+'''),
+      throwsA(isA<Exception>()),
+    );
   });
 
   test('a bad request surfaces the server validation message', () async {

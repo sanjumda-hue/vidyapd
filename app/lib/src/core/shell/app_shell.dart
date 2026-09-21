@@ -89,6 +89,7 @@ const _railItems = [
   _RailItem(Icons.dashboard_rounded, 'Home', '/'),
   _RailItem(Icons.auto_graph_rounded, 'Predict', '/predict'),
   _RailItem(Icons.apartment_rounded, 'Colleges', '/colleges'),
+  _RailItem(Icons.fact_check_rounded, 'Mock Test', '/mock'),
   _RailItem(Icons.balance_rounded, 'Compare', '/compare'),
   _RailItem(Icons.bookmark_rounded, 'Shortlist', '/shortlist'),
   _RailItem(Icons.school_rounded, 'Exams', '/exams'),

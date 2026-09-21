@@ -20,6 +20,7 @@ import { ExamsModule } from './modules/exams/exams.module';
 import { NotificationsModule } from './modules/notifications/notifications.module';
 import { PredictionModule } from './modules/prediction/prediction.module';
 import { ReferenceModule } from './modules/reference/reference.module';
+import { MockModule } from './modules/mock/mock.module';
 import { ShortlistModule } from './modules/shortlist/shortlist.module';
 import { UsersModule } from './modules/users/users.module';
 
@@ -46,6 +47,7 @@ import { UsersModule } from './modules/users/users.module';
     CutoffsModule,
     PredictionModule,
     CompareModule,
+    MockModule,
     ShortlistModule,
     NotificationsModule,
     AdminModule,

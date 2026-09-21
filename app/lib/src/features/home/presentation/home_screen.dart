@@ -20,6 +20,7 @@ const _tiles = [
   _Tile(Icons.calendar_month_outlined, 'Exam Calendar', '/calendar'),
   _Tile(Icons.apartment_outlined, 'Colleges', '/colleges', ready: true),
   _Tile(Icons.workspace_premium_outlined, 'Branches', '/branches'),
+  _Tile(Icons.fact_check_outlined, 'Mock Test', '/mock', ready: true),
   _Tile(Icons.balance_outlined, 'Compare Colleges', '/compare', ready: true),
   _Tile(Icons.favorite_border_rounded, 'My Shortlist', '/shortlist', ready: true),
 ];

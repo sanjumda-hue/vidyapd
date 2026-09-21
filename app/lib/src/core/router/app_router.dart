@@ -9,6 +9,7 @@ import '../../features/colleges/presentation/colleges_screen.dart';
 import '../../features/colleges/presentation/compare_screen.dart';
 import '../../features/exams/presentation/exams_screen.dart';
 import '../../features/home/presentation/home_screen.dart';
+import '../../features/mock/presentation/mock_screen.dart';
 import '../../features/prediction/presentation/predict_screen.dart';
 import '../../features/shared/coming_soon_screen.dart';
 import '../../features/shortlist/presentation/shortlist_screen.dart';
@@ -99,6 +100,7 @@ final routerProvider = Provider<GoRouter>((ref) {
               blockedBy: 'The branches API module has no routes yet.',
             ),
           ),
+          GoRoute(path: '/mock', builder: (_, __) => const MockScreen()),
           GoRoute(path: '/compare', builder: (_, __) => const CompareScreen()),
           GoRoute(path: '/shortlist', builder: (_, __) => const ShortlistScreen()),
         ],

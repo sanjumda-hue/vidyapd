@@ -612,6 +612,7 @@ model exams {
   exam_schedules             exam_schedules[]
   exam_sessions              exam_sessions[]
   states                     states?                      @relation(fields: [home_state_id], references: [id], onUpdate: NoAction)
+  mock_papers                mock_papers[]
   notification_subscriptions notification_subscriptions[]
   notifications              notifications[]
   percentile_rank_mapping    percentile_rank_mapping[]
@@ -953,21 +954,22 @@ model specializations {
 /// This table contains check constraints and requires additional setup for migrations. Visit https://pris.ly/d/check-constraints for more info.
 /// This model or at least one of its fields has comments in the database, and requires an additional setup for migrations: Read more: https://pris.ly/d/database-comments
 model states {
-  id                                                    Int                       @id @default(autoincrement()) @db.SmallInt
-  code                                                  String                    @unique
-  name                                                  String                    @unique
-  kind                                                  String                    @default("state")
-  created_at                                            DateTime                  @default(now()) @db.Timestamptz(6)
-  updated_at                                            DateTime                  @default(now()) @db.Timestamptz(6)
+  id                                                    Int                         @id @default(autoincrement()) @db.SmallInt
+  code                                                  String                      @unique
+  name                                                  String                      @unique
+  kind                                                  String                      @default("state")
+  created_at                                            DateTime                    @default(now()) @db.Timestamptz(6)
+  updated_at                                            DateTime                    @default(now()) @db.Timestamptz(6)
   cities                                                cities[]
   college_campuses                                      college_campuses[]
+  college_state_corrections                             college_state_corrections[]
   colleges                                              colleges[]
   counselling_authorities                               counselling_authorities[]
   exams                                                 exams[]
   prediction_requests                                   prediction_requests[]
   quotas                                                quotas[]
-  user_profiles_user_profiles_domicile_state_idTostates user_profiles[]           @relation("user_profiles_domicile_state_idTostates")
-  user_profiles_user_profiles_home_state_idTostates     user_profiles[]           @relation("user_profiles_home_state_idTostates")
+  user_profiles_user_profiles_domicile_state_idTostates user_profiles[]             @relation("user_profiles_domicile_state_idTostates")
+  user_profiles_user_profiles_home_state_idTostates     user_profiles[]             @relation("user_profiles_home_state_idTostates")
 }
 
 /// This table contains check constraints and requires additional setup for migrations. Visit https://pris.ly/d/check-constraints for more info.
@@ -1052,12 +1054,96 @@ model users {
   updated_at                 DateTime                     @default(now()) @db.Timestamptz(6)
   data_change_logs           data_change_logs[]
   data_import_jobs           data_import_jobs[]
+  mock_attempts              mock_attempts[]
+  mock_papers                mock_papers[]
   notification_subscriptions notification_subscriptions[]
   notifications              notifications[]
   prediction_requests        prediction_requests[]
   user_exam_scores           user_exam_scores[]
   user_profiles              user_profiles?
   user_shortlists            user_shortlists[]
+}
+
+model college_state_corrections {
+  college_name String @id
+  state_code   String
+  states       states @relation(fields: [state_code], references: [code], onDelete: NoAction, onUpdate: NoAction)
+}
+
+/// This model or at least one of its fields has comments in the database, and requires an additional setup for migrations: Read more: https://pris.ly/d/database-comments
+model mock_attempt_answers {
+  id              BigInt        @id @default(autoincrement())
+  mock_attempt_id BigInt
+  question_no     Int           @db.SmallInt
+  given_answer    String?
+  correct_answer  String
+  is_correct      Boolean
+  awarded         Decimal       @db.Decimal(6, 2)
+  mock_attempts   mock_attempts @relation(fields: [mock_attempt_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
+
+  @@unique([mock_attempt_id, question_no])
+  @@index([mock_attempt_id, question_no], map: "idx_mock_answers_attempt")
+}
+
+model mock_attempts {
+  id                   BigInt                 @id @default(autoincrement())
+  uuid                 String                 @unique @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  mock_paper_id        Int
+  user_id              BigInt?
+  score                Decimal                @db.Decimal(8, 2)
+  max_marks            Decimal                @db.Decimal(8, 2)
+  correct              Int                    @default(0) @db.SmallInt
+  wrong                Int                    @default(0) @db.SmallInt
+  skipped              Int                    @default(0) @db.SmallInt
+  attempted_at         DateTime               @default(now()) @db.Timestamptz(6)
+  mock_attempt_answers mock_attempt_answers[]
+  mock_papers          mock_papers            @relation(fields: [mock_paper_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
+  users                users?                 @relation(fields: [user_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
+
+  @@index([mock_paper_id, score(sort: Desc)], map: "idx_mock_attempts_paper")
+  @@index([user_id, attempted_at(sort: Desc)], map: "idx_mock_attempts_user")
+}
+
+/// This table contains check constraints and requires additional setup for migrations. Visit https://pris.ly/d/check-constraints for more info.
+model mock_paper_questions {
+  id             BigInt             @id @default(autoincrement())
+  mock_paper_id  Int
+  question_no    Int                @db.SmallInt
+  section        String?
+  kind           mock_question_kind @default(mcq_single)
+  correct_answer String
+  marks_correct  Decimal?           @db.Decimal(6, 2)
+  marks_wrong    Decimal?           @db.Decimal(6, 2)
+  mock_papers    mock_papers        @relation(fields: [mock_paper_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
+
+  @@unique([mock_paper_id, question_no])
+  @@index([mock_paper_id, question_no], map: "idx_mock_questions_paper")
+}
+
+/// This table contains check constraints and requires additional setup for migrations. Visit https://pris.ly/d/check-constraints for more info.
+/// This model or at least one of its fields has comments in the database, and requires an additional setup for migrations: Read more: https://pris.ly/d/database-comments
+model mock_papers {
+  id                   Int                    @id @default(autoincrement())
+  exam_id              Int                    @db.SmallInt
+  code                 String                 @unique
+  title                String
+  academic_year        Int?                   @db.SmallInt
+  marks_correct        Decimal                @db.Decimal(6, 2)
+  marks_wrong          Decimal                @default(0) @db.Decimal(6, 2)
+  marks_skipped        Decimal                @default(0) @db.Decimal(6, 2)
+  numeric_tolerance    Decimal                @default(0) @db.Decimal(10, 4)
+  total_questions      Int                    @db.SmallInt
+  max_marks            Decimal                @db.Decimal(8, 2)
+  source_note          String?
+  uploaded_by          BigInt?
+  created_at           DateTime               @default(now()) @db.Timestamptz(6)
+  updated_at           DateTime               @default(now()) @db.Timestamptz(6)
+  mock_attempts        mock_attempts[]
+  mock_paper_questions mock_paper_questions[]
+  exams                exams                  @relation(fields: [exam_id], references: [id], onUpdate: NoAction)
+  users                users?                 @relation(fields: [uploaded_by], references: [id], onUpdate: NoAction)
+
+  @@index([exam_id, academic_year(sort: Desc)], map: "idx_mock_papers_exam")
 }
 
 view v_exam_calendar {
@@ -1111,6 +1197,25 @@ view v_program_summary {
   highest_package      Decimal?        @db.Decimal(14, 2)
   placement_percentage Decimal?        @db.Decimal(5, 2)
   placement_year       Int?            @db.SmallInt
+}
+
+/// This view or at least one of its fields has comments in the database, and requires an additional setup for migrations: Read more: https://pris.ly/d/database-comments
+view v_program_latest_cutoff {
+  counselling_authority_id Int?     @db.SmallInt
+  exam_id                  Int?     @db.SmallInt
+  college_branch_id        BigInt?
+  college_id               Int?
+  branch_id                Int?     @db.SmallInt
+  seat_type_id             Int?     @db.SmallInt
+  category_id              Int?     @db.SmallInt
+  quota_id                 Int?     @db.SmallInt
+  gender_id                Int?     @db.SmallInt
+  measure                  String?
+  latest_closing           Decimal? @db.Decimal
+  latest_max_score         Decimal? @db.Decimal
+  latest_year              Int?     @db.SmallInt
+  years_available          Int?     @db.SmallInt
+  trend_slope              Decimal? @db.Decimal
 }
 
 enum accreditation_kind {
@@ -1271,4 +1376,10 @@ enum user_role {
   reviewer
   data_editor
   admin
+}
+
+enum mock_question_kind {
+  mcq_single
+  mcq_multi
+  numerical
 }
