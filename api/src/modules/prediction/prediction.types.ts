@@ -25,6 +25,14 @@ interface PredictionRowBase {
   score: string;
   years_available: number;
   trend_slope: string | null;
+  /**
+   * How many matched in this row's band, before the response was sliced.
+   *
+   * The engine returns a fair share of each band rather than the top N of one,
+   * so what comes back is a sample. Counting the returned rows would report
+   * "34 strong" where the student actually has 811.
+   */
+  band_total: string;
 }
 
 /** Raw shape returned by fn_predict_colleges(). Column names are snake_case. */

@@ -99,6 +99,27 @@ give 50 — adjusted by:
 | state in the student's list     | +3     |
 | cutoff tightening (slope < 0)   | −3     |
 
+## Step 4b — slice across the bands, not off the top
+
+`LIMIT` after `ORDER BY weighted_closing_rank ASC` takes the top N of "most
+competitive", and the top of that order is the riskiest end. A Delhi candidate
+at rank 45,821 has 811 strong, 518 historical and 119 borderline matches; the
+first 100 of them are all borderline. The app showed those 100 under a summary
+reading "100 Borderline" — seven percent of the results, all stretches, to a
+student who in fact had 811 comfortable options.
+
+`fn_predict_colleges_banded` (and its score twin) wrap the engine, take an even
+share of each band and keep the best-first order across the whole slice. They
+also return `band_total`, the true size of each band before slicing, so the
+counts a student sees describe every match rather than the sample that fitted
+in the response.
+
+They are wrappers rather than edits to the two functions: those are long, the
+eligibility and grading rules in them are hard-won, and retyping 150 lines to
+change a `LIMIT` is how a mistake gets into the middle of them. The inner call
+costs nothing extra — the engine already computes and sorts every matching row
+before its own `LIMIT` applies.
+
 ## Step 5 — snapshot
 
 Results are written to `prediction_results` with the numbers as computed. The

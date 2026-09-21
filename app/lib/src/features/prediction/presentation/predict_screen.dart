@@ -9,6 +9,7 @@ import '../../shared/demo_data_banner.dart';
 import '../../shared/num_format.dart';
 import '../application/prediction_controller.dart';
 import '../domain/prediction_response.dart';
+import 'widgets/best_picks.dart';
 import 'widgets/match_card.dart';
 import 'widgets/result_summary.dart';
 
@@ -423,6 +424,8 @@ class _Results extends StatelessWidget {
           children: [
             ResultSummary(response: response),
             const SizedBox(height: 16),
+            BestPicks(response: response),
+            const SizedBox(height: 18),
             for (final m in response.matches) ...[
               MatchCard(match: m),
               const SizedBox(height: 10),

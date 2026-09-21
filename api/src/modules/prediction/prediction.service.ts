@@ -83,7 +83,7 @@ export class PredictionService {
     const { rank, isEstimated, method } = await this.resolveRank(dto, context);
 
     const rows = await this.prisma.$queryRaw<PredictionRow[]>`
-      SELECT * FROM fn_predict_colleges(
+      SELECT * FROM fn_predict_colleges_banded(
         ${context.examId}::SMALLINT,
         ${rank}::BIGINT,
         ${context.categoryId}::SMALLINT,
@@ -128,7 +128,7 @@ export class PredictionService {
       category: dto.categoryCode,
       gender: dto.gender,
       homeState: dto.homeStateCode ?? null,
-      counts: this.countByGrade(matches),
+      counts: this.countByGrade(rows),
       matches,
       disclaimer: DISCLAIMER,
     };
@@ -159,7 +159,7 @@ export class PredictionService {
     }
 
     const rows = await this.prisma.$queryRaw<PredictionScoreRow[]>`
-      SELECT * FROM fn_predict_colleges_by_score(
+      SELECT * FROM fn_predict_colleges_by_score_banded(
         ${context.examId}::SMALLINT,
         ${dto.score}::NUMERIC,
         ${maxScore}::NUMERIC,
@@ -205,7 +205,7 @@ export class PredictionService {
       category: dto.categoryCode,
       gender: dto.gender,
       homeState: dto.homeStateCode ?? null,
-      counts: this.countByGrade(matches),
+      counts: this.countByGrade(rows),
       matches,
       disclaimer: DISCLAIMER,
     };
@@ -512,14 +512,20 @@ export class PredictionService {
     return v === null || v === undefined ? null : Number(v);
   }
 
-  private countByGrade(matches: PredictionMatch[]): Record<MatchGrade, number> {
+  /**
+   * The size of each band in the FULL result, not in the slice returned.
+   *
+   * The engine hands back a share of each band, so counting rows here would
+   * have told a candidate with 811 strong matches that they had 34.
+   */
+  private countByGrade(rows: AnyPredictionRow[]): Record<MatchGrade, number> {
     const counts: Record<MatchGrade, number> = {
       strong_historical_match: 0,
       historical_match: 0,
       borderline: 0,
       outside_historical_range: 0,
     };
-    for (const m of matches) counts[m.grade] += 1;
+    for (const r of rows) counts[r.grade] = Number(r.band_total);
     return counts;
   }
 
@@ -670,9 +676,23 @@ export class PredictionService {
       category: String(request.category_id),
       gender: String(request.applicant_gender),
       homeState: request.home_state_id ? String(request.home_state_id) : null,
-      counts: this.countByGrade(matches),
+      // Counted from the snapshot, not from band_total: prediction_results
+      // stores the rows that were shown and nothing about the ones that were
+      // not, so this is the honest figure for a replay.
+      counts: this.countStored(matches),
       matches,
       disclaimer: DISCLAIMER,
     };
+  }
+
+  private countStored(matches: PredictionMatch[]): Record<MatchGrade, number> {
+    const counts: Record<MatchGrade, number> = {
+      strong_historical_match: 0,
+      historical_match: 0,
+      borderline: 0,
+      outside_historical_range: 0,
+    };
+    for (const m of matches) counts[m.grade] += 1;
+    return counts;
   }
 }
