@@ -41,19 +41,30 @@ final predictionResultProvider =
   (ref) => PredictionResultController(ref),
 );
 
+/// Which grade band ("Strong"/"Match"/"Borderline") the results list is
+/// narrowed to; null means "All". Lives outside the result itself so a fresh
+/// run can reset it without the result controller knowing about the list UI.
+final selectedGradeFilterProvider = StateProvider<String?>((ref) => null);
+
 class PredictionResultController
     extends StateNotifier<AsyncValue<PredictionResponse>?> {
   PredictionResultController(this._ref) : super(null);
   final Ref _ref;
 
   Future<void> run(PredictInput input) async {
+    // A filter picked for a previous rank should not silently hide rows of a
+    // new one.
+    _ref.read(selectedGradeFilterProvider.notifier).state = null;
     state = const AsyncValue.loading();
     state = await AsyncValue.guard(
       () => _ref.read(predictionRepositoryProvider).predict(input),
     );
   }
 
-  void clear() => state = null;
+  void clear() {
+    state = null;
+    _ref.read(selectedGradeFilterProvider.notifier).state = null;
+  }
 }
 
 /// Put the Predict screen back to a blank form with no results.

@@ -25,9 +25,18 @@ class MatchCard extends StatelessWidget {
         tilePadding: const EdgeInsets.symmetric(horizontal: 14),
         childrenPadding: const EdgeInsets.fromLTRB(14, 0, 14, 14),
         leading: Icon(GradeColors.iconOf(match.grade), color: color),
-        title: Text(
-          match.college.shortName ?? match.college.name,
-          style: const TextStyle(fontWeight: FontWeight.w600),
+        title: Row(
+          children: [
+            Flexible(
+              child: Text(
+                match.college.shortName ?? match.college.name,
+                style: const TextStyle(fontWeight: FontWeight.w600),
+                overflow: TextOverflow.ellipsis,
+              ),
+            ),
+            const SizedBox(width: 8),
+            _InstituteTypeBadge(type: match.college.type),
+          ],
         ),
         // Two lines, because with real data the branch name alone is ambiguous.
         // A rank can match the same programme twice -- once in the OPEN pool
@@ -89,7 +98,6 @@ class MatchCard extends StatelessWidget {
             runSpacing: 6,
             children: [
               _Pill(match.genderPool),
-              _Pill(match.college.type),
               if (match.trend != 'unknown') _Pill('cutoff ${match.trend}'),
             ],
           ),
@@ -153,6 +161,40 @@ class MatchCard extends StatelessWidget {
           ],
         ],
       ),
+    );
+  }
+}
+
+/// IIT/NIT/IIIT badge on each card's title row.
+///
+/// The DB's college_type also has GFTI/STATE_GOVT/GOVT_AIDED/PRIVATE/DEEMED/
+/// AUTONOMOUS values, but only IIT/NIT/IIIT are reliably classified -- import
+/// defaults nearly everything else to GFTI and `ownership` to government, so
+/// a real Govt/Private split isn't something the data can back up yet.
+/// Everything outside the three known types reads as "Other" rather than a
+/// specific, likely-wrong label.
+class _InstituteTypeBadge extends StatelessWidget {
+  const _InstituteTypeBadge({required this.type});
+  final String type;
+
+  @override
+  Widget build(BuildContext context) {
+    final scheme = Theme.of(context).colorScheme;
+    final (label, color) = switch (type) {
+      'IIT' => ('IIT', const Color(0xFF8B5CF6)),
+      'NIT' => ('NIT', const Color(0xFF0891B2)),
+      'IIIT' => ('IIIT', const Color(0xFFDB2777)),
+      _ => ('Other', scheme.outline),
+    };
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 2),
+      decoration: BoxDecoration(
+        color: color.withValues(alpha: 0.12),
+        borderRadius: BorderRadius.circular(6),
+        border: Border.all(color: color.withValues(alpha: 0.4)),
+      ),
+      child: Text(label,
+          style: TextStyle(fontSize: 10.5, fontWeight: FontWeight.w700, color: color)),
     );
   }
 }

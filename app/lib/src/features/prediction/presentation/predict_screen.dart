@@ -380,7 +380,7 @@ class _NoRunYet extends StatelessWidget {
   }
 }
 
-class _Results extends StatelessWidget {
+class _Results extends ConsumerWidget {
   const _Results({
     required this.result,
     required this.examName,
@@ -391,8 +391,9 @@ class _Results extends StatelessWidget {
   final bool examHasData;
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     final scheme = Theme.of(context).colorScheme;
+    final selectedGrade = ref.watch(selectedGradeFilterProvider);
 
     return result.when(
       loading: () => const Center(child: Padding(
@@ -419,17 +420,36 @@ class _Results extends StatelessWidget {
             homeStateSet: response.homeState != null,
           );
         }
+        final visible = selectedGrade == null
+            ? response.matches
+            : response.matches.where((m) => m.grade == selectedGrade).toList();
+
         return Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             ResultSummary(response: response),
             const SizedBox(height: 16),
-            BestPicks(response: response),
-            const SizedBox(height: 18),
-            for (final m in response.matches) ...[
-              MatchCard(match: m),
-              const SizedBox(height: 10),
+            // Redundant once a single band is picked -- the list below is
+            // already narrowed to it.
+            if (selectedGrade == null) ...[
+              BestPicks(response: response),
+              const SizedBox(height: 18),
             ],
+            if (visible.isEmpty)
+              Padding(
+                padding: const EdgeInsets.symmetric(vertical: 24),
+                child: Center(
+                  child: Text(
+                    'None of the fetched sample falls in this band. Try All.',
+                    style: TextStyle(fontSize: 12.5, color: scheme.onSurfaceVariant),
+                  ),
+                ),
+              )
+            else
+              for (final m in visible) ...[
+                MatchCard(match: m),
+                const SizedBox(height: 10),
+              ],
             const SizedBox(height: 12),
             // Required on every result list. See docs/04-prediction-engine.md.
             Container(
